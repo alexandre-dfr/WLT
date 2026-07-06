@@ -1,0 +1,25 @@
+{
+  "client": {
+    "name": "Nom du Client",
+    "logo_url": "",
+    "contact": "contact@client.fr"
+  },
+  "auditor": {
+    "name": "Prénom Nom",
+    "company": "Votre ESN",
+    "email": "auditeur@esn.fr"
+  },
+  "audit": {
+    "title": "Audit Pare-feu & Web Policy",
+    "period_start": "2025-04-01",
+    "period_end": "2025-04-03",
+    "version": "1.0",
+    "confidentiality": "CONFIDENTIEL"
+  },
+  "proxy": {
+    "enabled": false,
+    "url": "",
+    "username": "",
+    "password": ""
+  }
+}
