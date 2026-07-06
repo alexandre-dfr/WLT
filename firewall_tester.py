@@ -27,22 +27,22 @@ TIMEOUT   = 8
 NEUTRAL_CATS = ("neutral", "valid", "neutral_ua")
 
 CATEGORY_META = {
-    "adult":         {"label": "🔞 Adult / Pornography",       "color": "#f472b6", "severity": "critical"},
-    "social_media":  {"label": "💬 Social Media",              "color": "#818cf8", "severity": "minor"},
-    "crypto":        {"label": "₿  Cryptocurrency",            "color": "#fbbf24", "severity": "major"},
-    "gambling":      {"label": "🎰 Gambling",                  "color": "#fb923c", "severity": "major"},
-    "streaming":     {"label": "🎬 Streaming / Média",         "color": "#34d399", "severity": "minor"},
-    "cloud_pro":     {"label": "☁️  Cloud Storage Pro",        "color": "#60a5fa", "severity": "minor"},
-    "ai_llm":        {"label": "🤖 IA / LLM",                  "color": "#a78bfa", "severity": "minor"},
-    "darkweb":       {"label": "🕸️  Dark Web Adjacent",        "color": "#6b7280", "severity": "critical"},
-    "malware":       {"label": "☣️  Malware / Threats",        "color": "#ef4444", "severity": "critical"},
-    "phishing":      {"label": "🎣 Phishing",                  "color": "#f97316", "severity": "critical"},
-    "hacking_tools": {"label": "🛠️  Hacking Tools",            "color": "#c084fc", "severity": "major"},
-    "anonymizer":    {"label": "🧅 Anonymizers",               "color": "#6ee7b7", "severity": "major"},
-    "vpn":           {"label": "🔐 VPN",                       "color": "#38bdf8", "severity": "major"},
-    "data_exfil":    {"label": "📤 Data Exfiltration",         "color": "#fb7185", "severity": "critical"},
-    "file_sharing":  {"label": "📂 File Sharing",              "color": "#a3e635", "severity": "minor"},
-    "neutral":       {"label": "✅ Neutral Baselines",         "color": "#4ade80", "severity": "none"},
+    "adult":         {"label": "Adult / Pornography",   "color": "#f472b6", "severity": "critical"},
+    "social_media":  {"label": "Social Media",          "color": "#818cf8", "severity": "minor"},
+    "crypto":        {"label": "Cryptocurrency",        "color": "#fbbf24", "severity": "major"},
+    "gambling":      {"label": "Gambling",              "color": "#fb923c", "severity": "major"},
+    "streaming":     {"label": "Streaming / Media",     "color": "#34d399", "severity": "minor"},
+    "cloud_pro":     {"label": "Cloud Storage Pro",     "color": "#60a5fa", "severity": "minor"},
+    "ai_llm":        {"label": "AI / LLM",              "color": "#a78bfa", "severity": "minor"},
+    "darkweb":       {"label": "Dark Web Adjacent",     "color": "#6b7280", "severity": "critical"},
+    "malware":       {"label": "Malware / Threats",     "color": "#ef4444", "severity": "critical"},
+    "phishing":      {"label": "Phishing",              "color": "#f97316", "severity": "critical"},
+    "hacking_tools": {"label": "Hacking Tools",         "color": "#c084fc", "severity": "major"},
+    "anonymizer":    {"label": "Anonymizers",           "color": "#6ee7b7", "severity": "major"},
+    "vpn":           {"label": "VPN",                   "color": "#38bdf8", "severity": "major"},
+    "data_exfil":    {"label": "Data Exfiltration",     "color": "#fb7185", "severity": "critical"},
+    "file_sharing":  {"label": "File Sharing",          "color": "#a3e635", "severity": "minor"},
+    "neutral":       {"label": "Neutral Baselines",     "color": "#4ade80", "severity": "none"},
 }
 
 RECOMMENDATIONS = {
@@ -452,7 +452,7 @@ def run_eicar_test(name, url, category):
             content += chunk
             if len(content) > 512: break
         if SIG in content:
-            r["details"]="⚠️  EICAR reçu — NON bloqué"
+            r["details"]="EICAR recu — NON bloque"
         else:
             r["blocked"]=True; r["details"]="Payload absent — bloqué"
     except requests.exceptions.ConnectionError:
@@ -520,7 +520,7 @@ def run_ssl_test(name, host, port, category):
             if category == "valid":
                 r["details"]=f"Valide — {s.version()} / {cipher[0] if cipher else '?'}"
             else:
-                r["details"]=f"⚠️  Mauvais cert accepté ({category})"
+                r["details"]=f"Mauvais cert accepte ({category})"
     except ssl.SSLCertVerificationError as e:
         r["blocked"]=True; r["status"]="cert_error"; r["details"]=f"SSL verify: {e.reason}"
     except ssl.SSLError as e:
@@ -594,7 +594,7 @@ def run_bypass_test(name, url_or_domain, technique, expected_blocked, descriptio
             r["blocked"] = True
             r["details"] = f"HTTP {resp.status_code} — Bloqué"
         else:
-            r["details"] = f"HTTP {resp.status_code} — Bypass possible ⚠️"
+            r["details"] = f"HTTP {resp.status_code} — Bypass possible [!]"
     except requests.exceptions.ConnectionError:
         r["blocked"] = True; r["details"] = "Connexion refusée — bloqué"
     except requests.exceptions.Timeout:
@@ -637,17 +637,17 @@ def run_protocol_test(name, host, port, protocol, expected_blocked, description)
     try:
         if protocol in ("ftp", "ftp_alt"):
             tcp_probe()
-            r["details"] = f"FTP {host}:{port} — TCP reachable ⚠️"
+            r["details"] = f"FTP {host}:{port} — TCP reachable [!]"
         elif protocol in ("ssh", "ssh_alt"):
             tcp_probe()
-            r["details"] = f"SSH {host}:{port} — TCP reachable ⚠️"
+            r["details"] = f"SSH {host}:{port} — TCP reachable [!]"
         elif protocol in ("mqtt", "mqtt_tls"):
             tcp_probe()
-            r["details"] = f"MQTT {host}:{port} — TCP reachable ⚠️"
+            r["details"] = f"MQTT {host}:{port} — TCP reachable [!]"
         elif protocol == "websocket":
             try:
                 ws_probe()
-                r["details"] = "WebSocket ws:// — handshake accepté ⚠️"
+                r["details"] = "WebSocket ws:// — handshake accepté [!]"
             except Exception:
                 tcp_probe()
                 r["details"] = "TCP reachable mais WS rejeté"
@@ -656,7 +656,7 @@ def run_protocol_test(name, host, port, protocol, expected_blocked, description)
             r["details"] = f"WSS {host}:{port} — TCP reachable (TLS)"
         else:
             tcp_probe()
-            r["details"] = f"TCP {host}:{port} — reachable ⚠️"
+            r["details"] = f"TCP {host}:{port} — reachable [!]"
     except ConnectionRefusedError:
         r["blocked"] = True; r["status"] = "refused"
         r["details"] = "Connexion refusée par l'hôte"
@@ -686,7 +686,7 @@ def run_nonstandard_port_test(name, host, port, category, expected_blocked, desc
     try:
         s = socket.create_connection((host, port), timeout=TIMEOUT)
         s.close()
-        r["details"]    = f"Port {port} ouvert — NOT blocked ⚠️"
+        r["details"]    = f"Port {port} ouvert — NOT blocked [!]"
         r["confidence"] = "certain"
     except ConnectionRefusedError:
         r["blocked"] = True; r["status"] = "refused"
@@ -736,7 +736,7 @@ def run_dns_exfil_test(name, query, qtype, expected_blocked, description):
                 r["details"]    = f"Sinkholed → {ips}"
                 r["confidence"] = "certain"
             elif expected_blocked:
-                r["details"]    = f"Résolu → {ips} — NON bloqué ⚠️"
+                r["details"]    = f"Résolu → {ips} — NON bloqué [!]"
                 r["confidence"] = "certain"
             else:
                 r["details"]    = f"Résolu → {ips}"
@@ -770,10 +770,10 @@ def run_upload_test(name, url, filename, content_bytes, mimetype, expected_block
         r["http_code"] = resp.status_code
         if resp.status_code in (400, 403, 406, 415, 451, 503):
             r["blocked"]    = True
-            r["details"]    = f"HTTP {resp.status_code} — Upload bloqué ✅"
+            r["details"]    = f"HTTP {resp.status_code} — Upload bloqué [OK]"
             r["confidence"] = "certain"
         else:
-            r["details"]    = f"HTTP {resp.status_code} — Upload accepté ⚠️"
+            r["details"]    = f"HTTP {resp.status_code} — Upload accepté [!]"
             r["confidence"] = "certain"
     except requests.exceptions.ConnectionError:
         r["blocked"]    = True
@@ -814,10 +814,10 @@ def run_bandwidth_test(name, url, min_kbps, category, description):
             r["details"] = f"HTTP {resp.status_code} — Bloqué"
             r["confidence"] = "certain"
         elif kbps < min_kbps:
-            r["details"]    = f"⚠️  {kbps} KB/s < seuil {min_kbps} KB/s — throttling probable"
+            r["details"]    = f"[!] {kbps} KB/s < seuil {min_kbps} KB/s — throttling probable"
             r["confidence"] = "probable"
         else:
-            r["details"]    = f"✅ {kbps} KB/s — OK (seuil {min_kbps} KB/s)"
+            r["details"]    = f"[OK] {kbps} KB/s — OK (seuil {min_kbps} KB/s)"
             r["confidence"] = "certain"
     except requests.exceptions.ConnectionError:
         r["blocked"] = True; r["details"] = "Connexion refusée"
@@ -864,7 +864,7 @@ def run_all_tests(modules=None, verbose=False, progress_cb=None):
             futs = {ex.submit(run_url_test,*t):t for t in URL_FILTER_TESTS}
             for f in as_completed(futs):
                 r = f.result(); ok = is_pass(r)
-                pr("✅" if ok else "❌", r["name"], r["details"]); out.append(r)
+                pr("[OK]" if ok else "[X]", r["name"], r["details"]); out.append(r)
                 if progress_cb: progress_cb()
         results["modules"]["url_filter"] = out
 
@@ -873,7 +873,7 @@ def run_all_tests(modules=None, verbose=False, progress_cb=None):
         out = []
         for t in EICAR_TESTS:
             r = run_eicar_test(*t)
-            pr("✅" if r["blocked"] else "❌", r["name"], r["details"]); out.append(r)
+            pr("[OK]" if r["blocked"] else "[X]", r["name"], r["details"]); out.append(r)
             if progress_cb: progress_cb()
         results["modules"]["eicar"] = out
 
@@ -884,7 +884,7 @@ def run_all_tests(modules=None, verbose=False, progress_cb=None):
             futs = {ex.submit(run_c2_test,*t):t for t in C2_IP_TESTS}
             for f in as_completed(futs):
                 r = f.result()
-                pr("✅" if r["blocked"] else "❌", r["name"], r["details"]); out.append(r)
+                pr("[OK]" if r["blocked"] else "[X]", r["name"], r["details"]); out.append(r)
                 if progress_cb: progress_cb()
         results["modules"]["c2_ip"] = out
 
@@ -895,7 +895,7 @@ def run_all_tests(modules=None, verbose=False, progress_cb=None):
             futs = {ex.submit(run_dns_test,*t):t for t in DNS_TESTS}
             for f in as_completed(futs):
                 r = f.result(); ok = is_pass(r)
-                pr("✅" if ok else "❌", r["name"], r["details"]); out.append(r)
+                pr("[OK]" if ok else "[X]", r["name"], r["details"]); out.append(r)
                 if progress_cb: progress_cb()
         results["modules"]["dns"] = out
 
@@ -906,7 +906,7 @@ def run_all_tests(modules=None, verbose=False, progress_cb=None):
             futs = {ex.submit(run_ssl_test,*t):t for t in SSL_TESTS}
             for f in as_completed(futs):
                 r = f.result(); ok = is_pass(r)
-                pr("✅" if ok else "❌", r["name"], r["details"]); out.append(r)
+                pr("[OK]" if ok else "[X]", r["name"], r["details"]); out.append(r)
                 if progress_cb: progress_cb()
         results["modules"]["ssl"] = out
 
@@ -917,7 +917,7 @@ def run_all_tests(modules=None, verbose=False, progress_cb=None):
             futs = {ex.submit(run_app_layer_test,*t):t for t in APP_LAYER_TESTS}
             for f in as_completed(futs):
                 r = f.result(); ok = is_pass(r)
-                pr("✅" if ok else "❌", r["name"], r["details"]); out.append(r)
+                pr("[OK]" if ok else "[X]", r["name"], r["details"]); out.append(r)
                 if progress_cb: progress_cb()
         results["modules"]["app_layer"] = out
 
@@ -930,7 +930,7 @@ def run_all_tests(modules=None, verbose=False, progress_cb=None):
             for f in as_completed(futs):
                 r = f.result(); ok = r["blocked"]
                 conf = r.get("confidence","?")
-                pr("✅" if ok else "❌", r["name"], f"{r['details']} [{conf}]"); out.append(r)
+                pr("[OK]" if ok else "[X]", r["name"], f"{r['details']} [{conf}]"); out.append(r)
                 if progress_cb: progress_cb()
         results["modules"]["bypass"] = out
 
@@ -942,7 +942,7 @@ def run_all_tests(modules=None, verbose=False, progress_cb=None):
             for f in as_completed(futs):
                 r = f.result(); ok = r["blocked"]
                 conf = r.get("confidence","?")
-                pr("✅" if ok else "❌", r["name"], f"{r['details']} [{conf}]"); out.append(r)
+                pr("[OK]" if ok else "[X]", r["name"], f"{r['details']} [{conf}]"); out.append(r)
                 if progress_cb: progress_cb()
         results["modules"]["protocols"] = out
 
@@ -954,7 +954,7 @@ def run_all_tests(modules=None, verbose=False, progress_cb=None):
             for f in as_completed(futs):
                 r = f.result(); ok = r["blocked"]
                 conf = r.get("confidence","?")
-                pr("✅" if ok else "❌", r["name"], f"{r['details']} [{conf}]"); out.append(r)
+                pr("[OK]" if ok else "[X]", r["name"], f"{r['details']} [{conf}]"); out.append(r)
                 if progress_cb: progress_cb()
         results["modules"]["nonstandard_ports"] = out
 
@@ -966,7 +966,7 @@ def run_all_tests(modules=None, verbose=False, progress_cb=None):
             cat = r.get("qtype","")
             ok  = r["blocked"] if t[3] else not r["blocked"]
             conf = r.get("confidence","?")
-            pr("✅" if ok else "❌", r["name"], f"{r['details']} [{conf}]"); out.append(r)
+            pr("[OK]" if ok else "[X]", r["name"], f"{r['details']} [{conf}]"); out.append(r)
             if progress_cb: progress_cb()
         results["modules"]["dns_exfil"] = out
 
@@ -978,7 +978,7 @@ def run_all_tests(modules=None, verbose=False, progress_cb=None):
             cat = "neutral_upload" if not t[5] else "upload"
             ok  = (not r["blocked"]) if not t[5] else r["blocked"]
             conf = r.get("confidence","?")
-            pr("✅" if ok else "❌", r["name"], f"{r['details']} [{conf}]"); out.append(r)
+            pr("[OK]" if ok else "[X]", r["name"], f"{r['details']} [{conf}]"); out.append(r)
             if progress_cb: progress_cb()
         results["modules"]["upload"] = out
 
@@ -990,7 +990,7 @@ def run_all_tests(modules=None, verbose=False, progress_cb=None):
             for f in as_completed(futs):
                 r = f.result()
                 conf = r.get("confidence","?")
-                pr("📶", r["name"], f"{r['details']} [{conf}]"); out.append(r)
+                pr("[BW]", r["name"], f"{r['details']} [{conf}]"); out.append(r)
                 if progress_cb: progress_cb()
         results["modules"]["bandwidth"] = out
 
@@ -1107,7 +1107,7 @@ def tui_menu(config):
     while True:
         clear()
         print("╔══════════════════════════════════════════════════════════════╗")
-        print("║        🔥  FirewallTester v3.0 — Security Audit Tool        ║")
+        print("║         FirewallTester v3.0 — Security Audit Tool        ║")
         print("╠══════════════════════════════════════════════════════════════╣")
         print(f"║  Host  : {socket.gethostname():<52}║")
         print(f"║  OS    : {(platform.system()+' '+platform.release()):<52}║")
@@ -1119,14 +1119,14 @@ def tui_menu(config):
         print("║  MODULES                                                     ║")
         keys_display = ["1","2","3","4","5","6","7","8","9","B","D","E"]
         for i,(key,desc) in enumerate(all_modules):
-            chk = "✅" if key in selected_modules else "⬜"
+            chk = "[x]" if key in selected_modules else "[ ]"
             lbl = keys_display[i] if i < len(keys_display) else "?"
             print(f"║  [{lbl}] {chk} {desc:<53}║")
         print("╠══════════════════════════════════════════════════════════════╣")
         print(f"║  [7] Rapport : {output_name:<47}║")
-        json_chk = "✅" if export_json else "⬜"
+        json_chk = "[x]" if export_json else "[ ]"
         print(f"║  [8] Export JSON : {json_chk:<43}║")
-        pdf_chk  = "✅" if export_pdf_flag else "⬜"
+        pdf_chk  = "[x]" if export_pdf_flag else "[ ]"
         print(f"║  [P] Export PDF  : {pdf_chk:<43}║")
         print("╠══════════════════════════════════════════════════════════════╣")
         print("║  [9] Configurer le proxy                                     ║")
@@ -1169,7 +1169,7 @@ def tui_menu(config):
                 if use != "n":
                     PROXIES.clear(); PROXIES.update({"http":sys_proxy,"https":sys_proxy})
                     proxy_cfg["enabled"]=True; proxy_cfg["url"]=sys_proxy
-                    input("  ✅ Proxy système configuré. Appuyez sur Entrée…"); continue
+                    input("  [OK] Proxy système configuré. Appuyez sur Entrée…"); continue
             print("  Format : http://proxy:port  ou  http://user:pass@proxy:port")
             print("  Laisser vide pour connexion directe")
             url = input("  URL Proxy : ").strip()
@@ -1179,7 +1179,7 @@ def tui_menu(config):
                 proxy_cfg["enabled"]=True; proxy_cfg["url"]=url
             else:
                 proxy_cfg["enabled"]=False
-            input("  ✅ Proxy mis à jour. Appuyez sur Entrée…")
+            input("  [OK] Proxy mis à jour. Appuyez sur Entrée…")
 
         elif choice == "C":
             clear()
@@ -1195,7 +1195,7 @@ def tui_menu(config):
             n = input(f"  Titre audit [{audit_cfg.get('title','Audit Pare-feu')}] : ").strip()
             if n: audit_cfg["title"] = n
             config["client"]=client_cfg; config["auditor"]=auditor_cfg; config["audit"]=audit_cfg
-            input("  ✅ Infos mises à jour. Appuyez sur Entrée…")
+            input("  [OK] Infos mises à jour. Appuyez sur Entrée…")
 
         elif choice == "A":
             if len(selected_modules) == len(all_modules):
@@ -1208,7 +1208,7 @@ def tui_menu(config):
 
         elif choice == "":
             if not selected_modules:
-                input("  ⚠️  Sélectionnez au moins un module. Appuyez sur Entrée…")
+                input("  [!] Sélectionnez au moins un module. Appuyez sur Entrée…")
                 continue
             clear()
             return list(selected_modules), output_name, export_json, export_pdf_flag, config
@@ -1216,11 +1216,6 @@ def tui_menu(config):
 # ═══════════════════════════════════════════════════════════════════════════════
 # HTML REPORT
 # ═══════════════════════════════════════════════════════════════════════════════
-
-# Chart.js minifié inline (évite tout CDN)
-CHARTJS_MIN = """
-/* Chart.js 4.x inline placeholder — on génère du SVG natif à la place */
-"""
 
 def pct_color(p):
     return "#22c55e" if p>=80 else ("#f59e0b" if p>=50 else "#ef4444")
@@ -1321,7 +1316,7 @@ def generate_html_report(results, score_data, recs, config, output_path):
         rows = ""
         for t in sorted(tests, key=lambda x: x["name"]):
             ok = is_pass(t); rc = "#16a34a" if ok else "#dc2626"
-            icon = "✅" if ok else "❌"
+            icon = "[OK]" if ok else "[X]"
             rows += f'''<tr>
               <td style="color:{rc};font-size:1.05em;width:28px">{icon}</td>
               <td class="td-name">{t["name"]}</td>
@@ -1337,8 +1332,8 @@ def generate_html_report(results, score_data, recs, config, output_path):
             <div class="acc-info">
               <span class="acc-label" style="color:{color}">{meta["label"]}</span>
               <div class="acc-pills">
-                <span class="pill pill-block">🚫 {blocked_n} bloqué(s)</span>
-                <span class="pill pill-pass">🔓 {unblocked_n} non bloqué(s)</span>
+                <span class="pill pill-block">{blocked_n} bloqué(s)</span>
+                <span class="pill pill-pass">{unblocked_n} non bloqué(s)</span>
                 <span class="pill" style="background:#1f2937;color:{pc}">{pct}% OK</span>
                 {sev_badge(meta.get("severity","minor"))}
               </div>
@@ -1357,7 +1352,7 @@ def generate_html_report(results, score_data, recs, config, output_path):
     def build_table(tests, cols):
         rows = ""
         for t in tests:
-            ok=is_pass(t); rc="#16a34a" if ok else "#dc2626"; icon="✅" if ok else "❌"
+            ok=is_pass(t); rc="#16a34a" if ok else "#dc2626"; icon="[OK]" if ok else "[X]"
             cells = "".join(f'<td>{t.get(c,"—")}</td>' for c in cols)
             rows += f'<tr><td style="color:{rc};font-size:1.05em">{icon}</td>{cells}<td style="color:{rc}">{t.get("details","")}</td><td style="color:#6b7280;white-space:nowrap">{t.get("duration_ms","?")} ms</td></tr>'
         return rows
@@ -1372,7 +1367,7 @@ def generate_html_report(results, score_data, recs, config, output_path):
         """Table avec colonne confiance en plus."""
         rows = ""
         for t in tests:
-            ok   = is_pass(t); rc = "#16a34a" if ok else "#dc2626"; icon = "✅" if ok else "❌"
+            ok   = is_pass(t); rc = "#16a34a" if ok else "#dc2626"; icon = "[OK]" if ok else "[X]"
             conf = t.get("confidence","?")
             cells = "".join(f'<td>{t.get(c,"—")}</td>' for c in cols)
             rows += (f'<tr><td style="color:{rc};font-size:1.05em">{icon}</td>' +
@@ -1387,7 +1382,7 @@ def generate_html_report(results, score_data, recs, config, output_path):
         for t in tests:
             kbps = t.get("speed_kbps",0)
             conf = t.get("confidence","?")
-            icon = "📶"
+            icon = "[BW]"
             rows += (f'<tr><td>{icon}</td>' +
                      f'<td>{t.get("name","")}</td>' +
                      f'<td>{t.get("category","")}</td>' +
@@ -1415,11 +1410,11 @@ def generate_html_report(results, score_data, recs, config, output_path):
                 {sev_badge(rec["severity"])}
                 <span style="color:#6b7280;font-size:.72rem;margin-left:auto">{rec["fails"]}/{rec["total"]} non bloqué(s) ({rec["pct_fail"]}%)</span>
               </div>
-              <div class="rec-title">⚠️  {rec["title"]}</div>
+              <div class="rec-title">[!] {rec["title"]}</div>
               <div class="rec-detail">{rec["detail"]}</div>
             </div>'''
     else:
-        recs_html = '<div style="color:#4ade80;padding:1rem">✅ Aucune recommandation critique — filtrage en ordre.</div>'
+        recs_html = '<div style="color:#4ade80;padding:1rem">[OK] Aucune recommandation critique — filtrage en ordre.</div>'
 
     # ── Global chart SVG (barres horizontales) ─────────────────────────────────
     chart_bars = ""
@@ -1514,7 +1509,7 @@ def generate_html_report(results, score_data, recs, config, output_path):
   <div class="hdr-left">
     {logo_html}
     <div>
-      <h1>🔥 Firewall<span>Tester</span> <span style="font-size:.75rem;color:var(--muted);font-weight:400">v3.0</span></h1>
+      <h1>Firewall<span>Tester</span> <span style="font-size:.75rem;color:var(--muted);font-weight:400">v3.0</span></h1>
       <div style="color:var(--muted);font-size:.68rem">{audit.get('title','Audit Pare-feu & Web Policy')} — {audit.get('confidentiality','CONFIDENTIEL')}</div>
     </div>
   </div>
@@ -1543,77 +1538,77 @@ def generate_html_report(results, score_data, recs, config, output_path):
 <div class="main">
 
   <div class="card" style="margin-bottom:1.5rem">
-    <h3>📊 Scores par module</h3>
+    <h3>Scores par module</h3>
     {score_bars}
   </div>
 
-  <h2>⚠️ Recommandations ({len(recs)})</h2>
+  <h2>[!] Recommandations ({len(recs)})</h2>
   {recs_html}
 
-  <h2>🌐 URL / Web Policy — par Catégorie</h2>
+  <h2>URL / Web Policy — par Catégorie</h2>
   {accordion_html}
 
-  <h2>☣️ EICAR / Malware Downloads</h2>
+  <h2>EICAR / Malware Downloads</h2>
   <div class="table-wrap"><table>
     <thead><tr><th></th><th>Test</th><th>URL</th><th>Catégorie</th><th>Résultat</th><th>Temps</th></tr></thead>
     <tbody>{eicar_rows}</tbody>
   </table></div>
 
-  <h2>🎯 C2 / Malicious IP Connections</h2>
+  <h2>C2 / Malicious IP Connections</h2>
   <div class="table-wrap"><table>
     <thead><tr><th></th><th>Test</th><th>IP</th><th>Port</th><th>Résultat</th><th>Temps</th></tr></thead>
     <tbody>{c2_rows}</tbody>
   </table></div>
 
-  <h2>🔍 DNS Filtering</h2>
+  <h2>DNS Filtering</h2>
   <div class="table-wrap"><table>
     <thead><tr><th></th><th>Test</th><th>Domaine</th><th>Catégorie</th><th>Résultat</th><th>Temps</th></tr></thead>
     <tbody>{dns_rows}</tbody>
   </table></div>
 
-  <h2>🔒 SSL / TLS Inspection</h2>
+  <h2>SSL / TLS Inspection</h2>
   <div class="table-wrap"><table>
     <thead><tr><th></th><th>Test</th><th>Hôte</th><th>Catégorie</th><th>Résultat</th><th>Temps</th></tr></thead>
     <tbody>{ssl_rows}</tbody>
   </table></div>
 
-  <h2>🧱 Application Layer — WAF / IPS</h2>
+  <h2>Application Layer — WAF / IPS</h2>
   <div class="table-wrap"><table>
     <thead><tr><th></th><th>Test</th><th>Catégorie</th><th>Description</th><th>Résultat</th><th>Temps</th></tr></thead>
     <tbody>{app_rows}</tbody>
   </table></div>
 
-  <h2>🔓 Bypass / Contournement de filtrage</h2>
+  <h2>Bypass / Contournement de filtrage</h2>
   <div class="table-wrap"><table>
     <thead><tr><th></th><th>Test</th><th>Technique</th><th>Description</th><th>Résultat</th><th>Confiance</th><th>Temps</th></tr></thead>
     <tbody>{bypass_rows}</tbody>
   </table></div>
 
-  <h2>🔌 Protocoles alternatifs</h2>
+  <h2>Protocoles alternatifs</h2>
   <div class="table-wrap"><table>
     <thead><tr><th></th><th>Test</th><th>Proto</th><th>Port</th><th>Description</th><th>Résultat</th><th>Confiance</th><th>Temps</th></tr></thead>
     <tbody>{proto_rows}</tbody>
   </table></div>
 
-  <h2>🚪 Ports non standard</h2>
+  <h2>Ports non standard</h2>
   <div class="table-wrap"><table>
     <thead><tr><th></th><th>Test</th><th>Port</th><th>Catégorie</th><th>Description</th><th>Résultat</th><th>Confiance</th><th>Temps</th></tr></thead>
     <tbody>{ports_rows}</tbody>
   </table></div>
 
-  <h2>📡 Exfiltration DNS</h2>
+  <h2>Exfiltration DNS</h2>
   <div class="table-wrap"><table>
     <thead><tr><th></th><th>Test</th><th>Domaine</th><th>Type</th><th>Description</th><th>Résultat</th><th>Confiance</th><th>Temps</th></tr></thead>
     <tbody>{dns_exfil_rows}</tbody>
   </table></div>
 
-  <h2>📤 Upload fichiers suspects</h2>
+  <h2>Upload fichiers suspects</h2>
   <div class="table-wrap"><table>
     <thead><tr><th></th><th>Test</th><th>Fichier</th><th>Description</th><th>Résultat</th><th>Confiance</th><th>Temps</th></tr></thead>
     <tbody>{upload_rows}</tbody>
   </table></div>
 
-  <h2>📶 Bandwidth / QoS</h2>
+  <h2>[BW] Bandwidth / QoS</h2>
   <div class="table-wrap"><table>
     <thead><tr><th></th><th>Test</th><th>Catégorie</th><th>Vitesse</th><th>Description</th><th>Résultat</th><th>Confiance</th><th>Temps</th></tr></thead>
     <tbody>{bw_rows}</tbody>
@@ -1624,7 +1619,7 @@ def generate_html_report(results, score_data, recs, config, output_path):
 <div class="footer-band">
   <span>FirewallTester v3.0 — {auditor.get('company','—')} — {auditor.get('name','—')}</span>
   <span>{audit.get('confidentiality','CONFIDENTIEL')} — {ts[:10]}</span>
-  <span>⚠️  Usage sur réseaux autorisés uniquement</span>
+  <span>[!] Usage sur réseaux autorisés uniquement</span>
 </div>
 
 <script>
@@ -1749,7 +1744,7 @@ def main():
 
     clear()
     print("═"*65)
-    print(f"  🔥 FirewallTester v{VERSION} — Lancement de l'audit")
+    print(f"  FirewallTester v{VERSION} — Lancement de l'audit")
     print("═"*65)
     print(f"  Host    : {socket.gethostname()}")
     print(f"  OS      : {platform.system()} {platform.release()}")
@@ -1768,10 +1763,10 @@ def main():
     for k,v in score_data.items():
         if k.startswith("_"): continue
         bar = "█"*(v["pct"]//10)+"░"*(10-v["pct"]//10)
-        st  = "✅" if v["pct"]>=80 else ("⚠️ " if v["pct"]>=50 else "❌")
+        st  = "[OK]" if v["pct"]>=80 else ("[!] " if v["pct"]>=50 else "[X]")
         print(f"  {st} {v['label']:<28} {bar} {v['pct']}%")
     if recs:
-        print(f"\n  ⚠️  {len(recs)} recommandation(s) générée(s)")
+        print(f"\n  [!] {len(recs)} recommandation(s) générée(s)")
         for r in recs:
             print(f"     [{r['severity'].upper():<8}] {r['title']}")
     print(f"{'═'*65}\n")

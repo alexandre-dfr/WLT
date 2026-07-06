@@ -1,237 +1,141 @@
-# 🔥 FirewallTester v3.0
+# FirewallTester v3.0
 
-Outil d'audit de pare-feu cross-platform **Windows / Linux**.  
-**154+ tests** au total — rapport HTML interactif avec graphiques, recommandations et config client.
+Outil d'audit de pare-feu et de politique web, compatible **Windows / Linux / macOS**.
+Il lance ~150 tests et produit un rapport HTML lisible (scores, recommandations, tables détaillées).
 
----
+## Installation
 
-## ✅ Prérequis
+Prérequis : **Python 3.8+** et **pip**.
 
-- **Python 3.8+**
-- **pip**
-
----
-
-## ⚙️ Installation
-
-### Windows
-```bat
+```bash
 pip install -r requirements.txt
 ```
 
-### Linux / macOS
+Sous Linux, en cas de conflit avec les paquets système :
+
 ```bash
-pip install -r requirements.txt
-# En cas de conflit système :
 pip install -r requirements.txt --break-system-packages
 ```
 
----
+## Utilisation
 
-## 🚀 Démarrage rapide
+### Menu interactif (le plus simple)
 
-### Mode interactif (recommandé)
 ```bash
 python firewall_tester.py
 ```
-→ Un menu TUI s'ouvre dans le terminal. Tu choisis les modules, le proxy, le nom du client, etc.
 
-### Mode CLI direct (sans menu)
+Un menu s'ouvre dans le terminal : choisissez les modules, le proxy et les infos
+client, puis appuyez sur Entrée pour lancer l'audit.
+
+### Ligne de commande (sans menu)
+
 ```bash
 python firewall_tester.py --no-tui --verbose
 ```
 
----
+Le rapport HTML est généré dans le dossier courant et s'ouvre dans n'importe quel navigateur.
 
-## 📋 Toutes les options CLI
+## Options principales
 
-| Option | Description |
-|--------|-------------|
-| `--no-tui` | Bypass le menu interactif, lance directement |
-| `--modules url eicar c2 dns ssl app` | Choisir les modules (défaut : tous) |
-| `--verbose` | Affiche chaque résultat en temps réel |
+| Option | Rôle |
+|--------|------|
+| `--no-tui` | Lance directement, sans le menu |
+| `--modules url dns ssl ...` | Choisir les modules (défaut : tous) |
+| `--verbose` | Affiche chaque test en temps réel |
+| `--output rapport.html` | Nom du fichier HTML |
+| `--json` | Exporte aussi un fichier JSON |
+| `--pdf` | Exporte aussi un PDF (voir plus bas) |
 | `--no-html` | Ne génère pas de rapport HTML |
-| `--output fichier.html` | Nom du fichier rapport HTML |
-| `--json` | Exporte aussi en JSON |
-| `--proxy http://user:pass@proxy:3128` | Proxy manuel (override config.json) |
-| `--config autre_config.json` | Utiliser un fichier de config différent |
+| `--proxy http://user:pass@host:3128` | Proxy manuel |
+| `--config mon_config.json` | Fichier de configuration |
 
----
+## Modules disponibles
 
-## 🖥️ Menu TUI — Navigation
+| Flag | Module | Ce qui est testé |
+|------|--------|------------------|
+| `url` | URL / Web Policy | Adult, social, streaming, IA, crypto, gambling, darkweb... |
+| `eicar` | EICAR / Malware | Téléchargements de fichiers de test antivirus |
+| `c2` | C2 / IPs | Connexions TCP vers IP et ports suspects |
+| `dns` | DNS | Domaines malicieux, DGA, DoH |
+| `ssl` | SSL / TLS | Certificats invalides, TLS ancien, chiffrements faibles |
+| `app` | WAF / IPS | User-Agent suspects, SQLi, XSS, path traversal |
+| `bypass` | Contournement | IP directe, encodage URL, casse, sous-domaines |
+| `proto` | Protocoles | FTP, SSH, MQTT, WebSocket, SMTP, IMAP |
+| `ports` | Ports non standard | Ports HTTP/HTTPS alternatifs, bases de données exposées |
+| `dns_exfil` | Exfiltration DNS | Requêtes TXT, DGA, tunnels DNS |
+| `upload` | Upload suspect | Envoi de fichiers EICAR, EXE, scripts |
+| `bandwidth` | Débit / QoS | Détection de throttling |
 
-```
-[1-6]   Activer / désactiver un module
-[7]     Changer le nom du fichier rapport
-[8]     Activer / désactiver l'export JSON
-[9]     Configurer le proxy (auto-détection + saisie manuelle)
-[C]     Saisir les infos client / auditeur / ESN
-[A]     Tout sélectionner / Tout désélectionner
-[ENTRÉE] Lancer l'audit
-[Q]     Quitter
-```
+## Proxy
 
----
+Le proxy est détecté automatiquement dans cet ordre :
 
-## 🌐 Proxy — Comment ça marche
-
-Le script détecte automatiquement le proxy dans cet ordre :
-
-1. **Variables d'environnement** (`HTTPS_PROXY`, `HTTP_PROXY`)
-2. **Registre Windows** (`Internet Settings > ProxyServer`)
-3. **Saisie manuelle** via le menu [9] ou `--proxy`
-4. **config.json** (`proxy.enabled: true`)
+1. Variables d'environnement (`HTTPS_PROXY`, `HTTP_PROXY`)
+2. Registre Windows (paramètres Internet)
+3. Menu interactif ou option `--proxy`
+4. Fichier `config.json`
 
 Formats acceptés :
+
 ```
 http://proxy.entreprise.com:3128
-http://username:password@proxy.entreprise.com:3128
+http://utilisateur:motdepasse@proxy.entreprise.com:3128
 ```
 
----
+## Configuration client (config.json)
 
-## ⚙️ Configuration client (config.json)
-
-Éditer `config.json` avant de lancer pour personnaliser le rapport :
+Optionnel. Éditez `config.json` pour personnaliser l'en-tête du rapport :
 
 ```json
 {
-  "client": {
-    "name": "Nom du Client SA",
-    "logo_url": "https://client.com/logo.png",
-    "contact": "dsi@client.fr"
-  },
-  "auditor": {
-    "name": "Prénom Nom",
-    "company": "Votre ESN",
-    "email": "auditeur@esn.fr"
-  },
-  "audit": {
-    "title": "Audit Pare-feu & Web Policy",
-    "period_start": "2025-04-01",
-    "period_end": "2025-04-03",
-    "version": "1.0",
-    "confidentiality": "CONFIDENTIEL"
-  },
-  "proxy": {
-    "enabled": false,
-    "url": "http://proxy:3128",
-    "username": "",
-    "password": ""
-  }
+  "client":  { "name": "Client SA", "logo_url": "", "contact": "dsi@client.fr" },
+  "auditor": { "name": "Prénom Nom", "company": "Votre ESN", "email": "audit@esn.fr" },
+  "audit":   { "title": "Audit Pare-feu & Web Policy", "confidentiality": "CONFIDENTIEL" },
+  "proxy":   { "enabled": false, "url": "http://proxy:3128", "username": "", "password": "" }
 }
 ```
 
----
+## Export PDF
 
-## 📊 Modules de test (154+ tests)
+Nécessite l'un des deux moteurs :
 
-| Module | Flag | Tests | Description |
-|--------|------|-------|-------------|
-| URL / Web Policy | `url` | 108 | Adult, social, streaming, IA, darkweb, crypto, gambling… |
-| EICAR / Malware | `eicar` | 6 | Fichiers EICAR officiels + WiCAR |
-| C2 / IPs | `c2` | 10 | Connexions TCP vers IPs/ports suspects |
-| DNS Filtering | `dns` | 12 | Domaines malicieux, DGA, DoH bypass |
-| SSL Inspection | `ssl` | 12 | Certs invalides, TLS old, chiffrements faibles |
-| App Layer / WAF | `app` | 6 | User-Agent suspects, SQLi, XSS, path traversal |
-
-### Catégories URL (108 tests)
-
-| Catégorie | Sites testés | Sévérité |
-|-----------|-------------|----------|
-| 🔞 Adult | Pornhub, xvideos, OnlyFans, Chaturbate… (12) | 🔴 CRITIQUE |
-| ☣️ Malware | URLhaus, WiCAR, Ransomware.org… (5) | 🔴 CRITIQUE |
-| 📤 Data Exfil | Pastebin, transfer.sh, rentry.co… (4) | 🔴 CRITIQUE |
-| 🕸️ Dark Web | Ahmia, Hidden Wiki, ZeroNet, I2P… (6) | 🔴 CRITIQUE |
-| 🎣 Phishing | PhishTank, OpenPhish (2) | 🔴 CRITIQUE |
-| ₿ Crypto | Binance, Coinbase, Kraken, OKX… (10) | 🟠 MAJEUR |
-| 🎰 Gambling | Winamax, Betclic, PMU, Bet365… (8) | 🟠 MAJEUR |
-| 🧅 Anonymizer | Tor, hide.me, ProxySite (3) | 🟠 MAJEUR |
-| 🔐 VPN | NordVPN, Mullvad, ProtonVPN… (4) | 🟠 MAJEUR |
-| 🛠️ Hacking Tools | Exploit-DB, Shodan, Kali… (5) | 🟠 MAJEUR |
-| 💬 Social Media | TikTok, Telegram, Discord, Reddit… (16) | 🔵 MINEUR |
-| 🎬 Streaming | YouTube, Netflix, Spotify, Disney+… (10) | 🔵 MINEUR |
-| ☁️ Cloud Pro | SharePoint, OneDrive, Box, iCloud… (8) | 🔵 MINEUR |
-| 🤖 IA / LLM | ChatGPT, Claude, Gemini, Copilot… (8) | 🔵 MINEUR |
-| 📂 File Sharing | WeTransfer, Mega, Mediafire (3) | 🔵 MINEUR |
-| ✅ Neutral | Google, Microsoft, Wikipedia, GitHub (4) | — |
-
----
-
-## 📈 Rapport HTML
-
-Le fichier `.html` s'ouvre directement dans n'importe quel navigateur.
-
-**Contenu :**
-- En-tête avec logo client, nom auditeur, période
-- Note globale A/B/C/D/F
-- Graphiques : barres de score par module + graphique SVG
-- **Section URL par catégorie** : cliquer pour voir les sites testés + camembert bloqué/non bloqué
-- Recommandations automatiques classées par sévérité (CRITIQUE / MAJEUR / MINEUR)
-- Tables détaillées EICAR, C2, DNS, SSL, App Layer
-
----
-
-## 🎯 Exemples d'utilisation
-
-### Audit client complet avec proxy authentifié
 ```bash
-python firewall_tester.py --no-tui --proxy http://admin:pass123@10.0.0.1:3128 --output audit_client.html --json --verbose
+pip install weasyprint      # recommandé, pur Python
+# ou
+pip install pdfkit          # nécessite aussi wkhtmltopdf (https://wkhtmltopdf.org)
 ```
 
-### Audit rapide URL + DNS uniquement
+Puis :
+
 ```bash
+python firewall_tester.py --no-tui --pdf
+```
+
+Si aucun moteur n'est installé, le script continue sans planter et affiche la marche à suivre.
+
+## Score
+
+| Note | Score | Signification |
+|------|-------|---------------|
+| A | ≥ 90% | Pare-feu bien configuré |
+| B | ≥ 75% | Bon, quelques lacunes |
+| C | ≥ 60% | Moyen, à améliorer |
+| D | ≥ 40% | Faible |
+| F | < 40% | Très permissif |
+
+## Exemples
+
+```bash
+# Audit complet avec proxy authentifié et export JSON
+python firewall_tester.py --no-tui --proxy http://admin:pass@10.0.0.1:3128 --json --verbose
+
+# Audit rapide URL + DNS uniquement
 python firewall_tester.py --no-tui --modules url dns --verbose
 ```
 
-### Mode interactif avec config client pré-remplie
-```bash
-# Éditer config.json avec les infos client, puis :
-python firewall_tester.py
-```
+## Avertissement légal
 
----
-
-## 📈 Interprétation du score
-
-| Grade | Score | Signification |
-|-------|-------|---------------|
-| **A** | ≥ 90% | Excellent — pare-feu bien configuré |
-| **B** | ≥ 75% | Bon — quelques lacunes mineures |
-| **C** | ≥ 60% | Moyen — améliorations nécessaires |
-| **D** | ≥ 40% | Faible — configuration insuffisante |
-| **F** | < 40% | Critique — pare-feu très permissif |
-
-
----
-
-## 📄 Export PDF
-
-Le rapport peut être exporté en PDF directement depuis le script.
-
-### Option 1 — WeasyPrint (recommandé, pur Python)
-```bash
-pip install weasyprint
-python firewall_tester.py --no-tui --pdf
-```
-
-### Option 2 — pdfkit + wkhtmltopdf
-```bash
-pip install pdfkit
-# Installer wkhtmltopdf : https://wkhtmltopdf.org/downloads.html
-# Windows : ajouter wkhtmltopdf au PATH
-python firewall_tester.py --no-tui --pdf
-```
-
-### Depuis le menu TUI
-Activer l'option **[P] Export PDF** avant de lancer l'audit.  
-Le PDF est généré au même endroit que le HTML, avec le même nom (`rapport.pdf`).
-
-> Si aucun moteur n'est installé, le script affiche les instructions d'installation et continue sans planter.
-
----
-
-## ⚠️ Disclaimer légal
-
-Utilisation réservée aux réseaux **dont vous êtes propriétaire ou pour lesquels vous disposez d'une autorisation écrite**.  
-Article 323-1 du Code pénal (France) — accès frauduleux à un système informatique.
+À utiliser uniquement sur des réseaux dont vous êtes propriétaire ou pour lesquels
+vous disposez d'une autorisation écrite. En France, l'accès frauduleux à un système
+informatique est réprimé par l'article 323-1 du Code pénal.
