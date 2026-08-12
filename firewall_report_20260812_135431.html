@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FirewallTester v3 — TEST</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+  :root{--bg:#0a0f1a;--surface:#111827;--surface2:#1f2937;--border:#374151;--text:#f9fafb;--muted:#9ca3af;--accent:#38bdf8}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+  /* HEADER */
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:1.2rem 2.5rem;display:flex;justify-content:space-between;align-items:center;gap:1rem}
+  .hdr-left{display:flex;align-items:center;gap:1rem}
+  header h1{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800}
+  header h1 span{color:var(--accent)}
+  .hdr-meta{color:var(--muted);font-size:.72rem;line-height:1.9;text-align:right}
+  /* COVER BAND */
+  .cover{background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 100%);border-bottom:1px solid var(--border);padding:1.5rem 2.5rem;display:flex;align-items:center;gap:2rem}
+  .cover-grade{display:flex;flex-direction:column;align-items:center;justify-content:center;width:90px;height:90px;border-radius:10px;background:var(--bg);border:2px solid #ef4444;flex-shrink:0}
+  .cover-grade .gl{font-family:'Syne',sans-serif;font-size:2.5rem;font-weight:800;color:#ef4444}
+  .cover-grade .gp{font-size:.7rem;color:var(--muted)}
+  .cover-info h2{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:.4rem}
+  .cover-info p{color:var(--muted);font-size:.72rem;line-height:1.7}
+  /* MAIN */
+  .main{padding:1.5rem 2.5rem;max-width:1400px;margin:0 auto}
+  /* SUMMARY GRID */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.25rem;margin-bottom:1.5rem}
+  .card h3{font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:1rem;border-left:3px solid var(--accent);padding-left:.6rem}
+  .mod-score{display:grid;grid-template-columns:1fr auto auto;gap:.6rem;align-items:center;margin-bottom:.55rem}
+  .mod-label{color:var(--muted);font-size:.72rem}
+  .bar-wrap{grid-column:1/-1;background:var(--bg);border-radius:4px;height:5px;margin-top:-3px;margin-bottom:2px}
+  .mod-score .bar-wrap{grid-column:unset;width:100%;margin:0}
+  .mod-score{display:flex;flex-direction:column;gap:.2rem;margin-bottom:.75rem}
+  .mod-score>div{display:flex;justify-content:space-between;align-items:center}
+  .bar-fill{height:5px;border-radius:4px}
+  .mod-pct{font-size:.7rem;font-weight:700;white-space:nowrap}
+  /* SECTIONS */
+  h2{font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin:2rem 0 .75rem;border-left:3px solid var(--accent);padding-left:.7rem}
+  /* ACCORDION */
+  .acc-item{border:1px solid var(--border);border-radius:8px;margin-bottom:.5rem;overflow:hidden}
+  .acc-header{width:100%;background:var(--surface);border:none;padding:.7rem 1rem;display:flex;align-items:center;gap:.75rem;cursor:pointer;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.78rem;text-align:left;transition:background .15s}
+  .acc-header:hover{background:var(--surface2)}
+  .acc-donut{flex-shrink:0}
+  .acc-info{flex:1;display:flex;flex-direction:column;gap:.3rem}
+  .acc-label{font-weight:700;font-size:.82rem}
+  .acc-pills{display:flex;gap:.4rem;flex-wrap:wrap}
+  .pill{padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700}
+  .pill-block{background:#3f1010;color:#fca5a5}
+  .pill-pass{background:#052e16;color:#86efac}
+  .acc-arrow{color:var(--muted);font-size:.7rem;transition:transform .2s;flex-shrink:0}
+  .acc-body{background:var(--bg);border-top:1px solid var(--border)}
+  /* TABLES */
+  .table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border);margin-bottom:1.5rem}
+  table{width:100%;border-collapse:collapse}
+  thead{background:var(--surface2)}
+  th{padding:.5rem 1rem;text-align:left;color:var(--muted);font-size:.65rem;text-transform:uppercase;letter-spacing:.5px;font-weight:700;white-space:nowrap}
+  td{padding:.45rem 1rem;border-top:1px solid var(--border);word-break:break-all}
+  tr:hover td{background:var(--surface2)}
+  .td-name{white-space:nowrap;min-width:130px}
+  .td-url{color:var(--muted);font-size:.72rem}
+  /* RECOMMENDATIONS */
+  .rec-item{background:var(--surface);border-radius:8px;margin-bottom:.75rem;padding:1rem 1.25rem;border-left:3px solid #6b7280}
+  .rec-header{display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem;flex-wrap:wrap}
+  .rec-title{font-weight:700;font-size:.82rem;margin-bottom:.3rem;color:var(--text)}
+  .rec-detail{color:var(--muted);font-size:.75rem;line-height:1.6}
+  /* FOOTER */
+  .footer-band{background:var(--surface);border-top:1px solid var(--border);padding:1rem 2.5rem;display:flex;justify-content:space-between;align-items:center;font-size:.68rem;color:var(--muted);margin-top:2rem}
+  @media print{.acc-body{display:block!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-left">
+    
+    <div>
+      <h1>Firewall<span>Tester</span> <span style="font-size:.75rem;color:var(--muted);font-weight:400">v3.0</span></h1>
+      <div style="color:var(--muted);font-size:.68rem">Audit Pare-feu Web Policy — CONFIDENTIEL</div>
+    </div>
+  </div>
+  <div class="hdr-meta">
+    <div>Client : <b style="color:var(--text)">TEST</b></div>
+    <div>Auditeur : <b style="color:var(--text)">Alex DUFOUR — ADDON</b></div>
+    <div>Hôte : <b style="color:var(--text)">PRO-LPT-ADU</b> / Windows 11</div>
+    <div>Date : <b style="color:var(--text)">2026-08-12 13:55:36</b></div>
+    <div>Proxy : <b style="color:var(--text)">none</b></div>
+  </div>
+</header>
+
+<div class="cover">
+  <div class="cover-grade">
+    <div class="gl">F</div>
+    <div class="gp">33%</div>
+  </div>
+  <div class="cover-info">
+    <h2>Score global : 66/201 tests réussis</h2>
+    <p>Période : 2025-04-01 → 2025-04-03<br>
+       Version rapport : 1.0<br>
+       OS audité : Windows 11</p>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="card" style="margin-bottom:1.5rem">
+    <h3>Scores par module</h3>
+    <div class="mod-score">
+          <span class="mod-label">URL / Web Policy</span>
+          <div class="bar-wrap"><div class="bar-fill" style="width:6%;background:#ef4444"></div></div>
+          <span class="mod-pct" style="color:#ef4444">7/108 (6%)</span>
+        </div><div class="mod-score">
+          <span class="mod-label">EICAR / Malware</span>
+          <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#22c55e"></div></div>
+          <span class="mod-pct" style="color:#22c55e">6/6 (100%)</span>
+        </div><div class="mod-score">
+          <span class="mod-label">C2 / IPs</span>
+          <div class="bar-wrap"><div class="bar-fill" style="width:70%;background:#f59e0b"></div></div>
+          <span class="mod-pct" style="color:#f59e0b">7/10 (70%)</span>
+        </div><div class="mod-score">
+          <span class="mod-label">DNS Filtering</span>
+          <div class="bar-wrap"><div class="bar-fill" style="width:25%;background:#ef4444"></div></div>
+          <span class="mod-pct" style="color:#ef4444">3/12 (25%)</span>
+        </div><div class="mod-score">
+          <span class="mod-label">SSL Inspection</span>
+          <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#22c55e"></div></div>
+          <span class="mod-pct" style="color:#22c55e">12/12 (100%)</span>
+        </div><div class="mod-score">
+          <span class="mod-label">App Layer / WAF</span>
+          <div class="bar-wrap"><div class="bar-fill" style="width:17%;background:#ef4444"></div></div>
+          <span class="mod-pct" style="color:#ef4444">1/6 (17%)</span>
+        </div><div class="mod-score">
+          <span class="mod-label">Bypass / Contournement</span>
+          <div class="bar-wrap"><div class="bar-fill" style="width:33%;background:#ef4444"></div></div>
+          <span class="mod-pct" style="color:#ef4444">4/12 (33%)</span>
+        </div><div class="mod-score">
+          <span class="mod-label">Protocoles alternatifs</span>
+          <div class="bar-wrap"><div class="bar-fill" style="width:30%;background:#ef4444"></div></div>
+          <span class="mod-pct" style="color:#ef4444">3/10 (30%)</span>
+        </div><div class="mod-score">
+          <span class="mod-label">Ports non standard</span>
+          <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#22c55e"></div></div>
+          <span class="mod-pct" style="color:#22c55e">12/12 (100%)</span>
+        </div><div class="mod-score">
+          <span class="mod-label">Exfiltration DNS</span>
+          <div class="bar-wrap"><div class="bar-fill" style="width:60%;background:#f59e0b"></div></div>
+          <span class="mod-pct" style="color:#f59e0b">3/5 (60%)</span>
+        </div><div class="mod-score">
+          <span class="mod-label">Upload fichiers suspects</span>
+          <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#22c55e"></div></div>
+          <span class="mod-pct" style="color:#22c55e">4/4 (100%)</span>
+        </div><div class="mod-score">
+          <span class="mod-label">Bandwidth / QoS</span>
+          <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#22c55e"></div></div>
+          <span class="mod-pct" style="color:#22c55e">4/4 (100%)</span>
+        </div>
+  </div>
+
+  <h2>[!] Recommandations (13)</h2>
+  <div class="rec-item" style="border-left:3px solid #ef4444">
+              <div class="rec-header">
+                <span style="color:#ef4444;font-weight:700">Malware / Threats</span>
+                <span style="background:#7f1d1d;color:#fca5a5;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">CRITIQUE</span>
+                <span style="color:#6b7280;font-size:.72rem;margin-left:auto">4/5 non bloqué(s) (80%)</span>
+              </div>
+              <div class="rec-title">[!] Activer le filtrage de malwares en temps réel</div>
+              <div class="rec-detail">Des URL catégorisées malware sont accessibles. Le pare-feu ne bloque pas les menaces connues.</div>
+            </div><div class="rec-item" style="border-left:3px solid #f472b6">
+              <div class="rec-header">
+                <span style="color:#f472b6;font-weight:700">Adult / Pornography</span>
+                <span style="background:#7f1d1d;color:#fca5a5;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">CRITIQUE</span>
+                <span style="color:#6b7280;font-size:.72rem;margin-left:auto">12/12 non bloqué(s) (100%)</span>
+              </div>
+              <div class="rec-title">[!] Activer le filtrage de contenu adulte</div>
+              <div class="rec-detail">La catégorie Adult/Pornography n'est pas bloquée. Ce type de contenu expose l'entreprise à des risques légaux (harcèlement, environnement de travail) et de productivité.</div>
+            </div><div class="rec-item" style="border-left:3px solid #f97316">
+              <div class="rec-header">
+                <span style="color:#f97316;font-weight:700">Phishing</span>
+                <span style="background:#7f1d1d;color:#fca5a5;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">CRITIQUE</span>
+                <span style="color:#6b7280;font-size:.72rem;margin-left:auto">2/2 non bloqué(s) (100%)</span>
+              </div>
+              <div class="rec-title">[!] Activer l'anti-phishing sur le proxy/pare-feu</div>
+              <div class="rec-detail">Des pages de phishing connues sont accessibles depuis le réseau.</div>
+            </div><div class="rec-item" style="border-left:3px solid #6b7280">
+              <div class="rec-header">
+                <span style="color:#6b7280;font-weight:700">Dark Web Adjacent</span>
+                <span style="background:#7f1d1d;color:#fca5a5;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">CRITIQUE</span>
+                <span style="color:#6b7280;font-size:.72rem;margin-left:auto">6/6 non bloqué(s) (100%)</span>
+              </div>
+              <div class="rec-title">[!] Bloquer les sites dark web / anonymisation</div>
+              <div class="rec-detail">L'accès à des sites dark web adjacent indique un risque d'exfiltration ou d'activité malveillante.</div>
+            </div><div class="rec-item" style="border-left:3px solid #fb7185">
+              <div class="rec-header">
+                <span style="color:#fb7185;font-weight:700">Data Exfiltration</span>
+                <span style="background:#7f1d1d;color:#fca5a5;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">CRITIQUE</span>
+                <span style="color:#6b7280;font-size:.72rem;margin-left:auto">3/4 non bloqué(s) (75%)</span>
+              </div>
+              <div class="rec-title">[!] Bloquer les sites de partage de données anonymes</div>
+              <div class="rec-detail">Pastebin, transfer.sh et similaires sont des canaux classiques d'exfiltration de données.</div>
+            </div><div class="rec-item" style="border-left:3px solid #fb923c">
+              <div class="rec-header">
+                <span style="color:#fb923c;font-weight:700">Gambling</span>
+                <span style="background:#431407;color:#fdba74;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">MAJEUR</span>
+                <span style="color:#6b7280;font-size:.72rem;margin-left:auto">8/8 non bloqué(s) (100%)</span>
+              </div>
+              <div class="rec-title">[!] Bloquer les sites de jeux d'argent</div>
+              <div class="rec-detail">Les sites de gambling sont illégaux en contexte professionnel dans de nombreux pays et exposent l'employeur à une responsabilité.</div>
+            </div><div class="rec-item" style="border-left:3px solid #fbbf24">
+              <div class="rec-header">
+                <span style="color:#fbbf24;font-weight:700">Cryptocurrency</span>
+                <span style="background:#431407;color:#fdba74;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">MAJEUR</span>
+                <span style="color:#6b7280;font-size:.72rem;margin-left:auto">10/10 non bloqué(s) (100%)</span>
+              </div>
+              <div class="rec-title">[!] Bloquer les plateformes de crypto-monnaies</div>
+              <div class="rec-detail">Les exchanges crypto sont des vecteurs de cryptojacking et de violation des politiques financières internes.</div>
+            </div><div class="rec-item" style="border-left:3px solid #c084fc">
+              <div class="rec-header">
+                <span style="color:#c084fc;font-weight:700">Hacking Tools</span>
+                <span style="background:#431407;color:#fdba74;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">MAJEUR</span>
+                <span style="color:#6b7280;font-size:.72rem;margin-left:auto">5/5 non bloqué(s) (100%)</span>
+              </div>
+              <div class="rec-title">[!] Bloquer les sites d'outils offensifs</div>
+              <div class="rec-detail">Les sites type Exploit-DB ou Shodan accessibles depuis le réseau augmentent la surface d'attaque interne.</div>
+            </div><div class="rec-item" style="border-left:3px solid #38bdf8">
+              <div class="rec-header">
+                <span style="color:#38bdf8;font-weight:700">VPN</span>
+                <span style="background:#431407;color:#fdba74;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">MAJEUR</span>
+                <span style="color:#6b7280;font-size:.72rem;margin-left:auto">4/4 non bloqué(s) (100%)</span>
+              </div>
+              <div class="rec-title">[!] Contrôler l'usage des VPN</div>
+              <div class="rec-detail">Des VPN externes non maîtrisés peuvent créer des tunnels chiffrés contournant la politique de sécurité.</div>
+            </div><div class="rec-item" style="border-left:3px solid #6ee7b7">
+              <div class="rec-header">
+                <span style="color:#6ee7b7;font-weight:700">Anonymizers</span>
+                <span style="background:#431407;color:#fdba74;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">MAJEUR</span>
+                <span style="color:#6b7280;font-size:.72rem;margin-left:auto">3/3 non bloqué(s) (100%)</span>
+              </div>
+              <div class="rec-title">[!] Bloquer les proxies et anonymiseurs web</div>
+              <div class="rec-detail">Les anonymiseurs permettent de contourner toutes les autres politiques de filtrage.</div>
+            </div><div class="rec-item" style="border-left:3px solid #818cf8">
+              <div class="rec-header">
+                <span style="color:#818cf8;font-weight:700">Social Media</span>
+                <span style="background:#1e3a5f;color:#93c5fd;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">MINEUR</span>
+                <span style="color:#6b7280;font-size:.72rem;margin-left:auto">16/16 non bloqué(s) (100%)</span>
+              </div>
+              <div class="rec-title">[!] Restreindre ou surveiller les réseaux sociaux</div>
+              <div class="rec-detail">Les réseaux sociaux non filtrés augmentent le risque de phishing, de fuite de données et de perte de productivité.</div>
+            </div><div class="rec-item" style="border-left:3px solid #34d399">
+              <div class="rec-header">
+                <span style="color:#34d399;font-weight:700">Streaming / Media</span>
+                <span style="background:#1e3a5f;color:#93c5fd;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">MINEUR</span>
+                <span style="color:#6b7280;font-size:.72rem;margin-left:auto">10/10 non bloqué(s) (100%)</span>
+              </div>
+              <div class="rec-title">[!] Restreindre les plateformes de streaming</div>
+              <div class="rec-detail">Le streaming non encadré consomme de la bande passante et augmente les risques de contenu inapproprié.</div>
+            </div><div class="rec-item" style="border-left:3px solid #a78bfa">
+              <div class="rec-header">
+                <span style="color:#a78bfa;font-weight:700">AI / LLM</span>
+                <span style="background:#1e3a5f;color:#93c5fd;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">MINEUR</span>
+                <span style="color:#6b7280;font-size:.72rem;margin-left:auto">8/8 non bloqué(s) (100%)</span>
+              </div>
+              <div class="rec-title">[!] Définir une politique d'usage des IA génératives</div>
+              <div class="rec-detail">L'accès non contrôlé aux LLM (ChatGPT, etc.) peut entraîner des fuites de données sensibles ou confidentielles.</div>
+            </div>
+
+  <h2>URL / Web Policy — par Catégorie</h2>
+  
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggleAcc('cat_adult')" style="border-left:3px solid #f472b6">
+            <div class="acc-donut"><svg width="80" height="80" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#1f2937" stroke-width="12"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#dc2626" stroke-width="12"
+    stroke-dasharray="188.5 188.4954" stroke-dashoffset="0"
+    transform="rotate(-90 40 40)"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#22c55e" stroke-width="12"
+    stroke-dasharray="0.0 188.4954" stroke-dashoffset="-188.5"
+    transform="rotate(-90 40 40)"/>
+  <text x="40" y="41" text-anchor="middle" dominant-baseline="middle"
+    font-size="11" font-weight="700" fill="#ef4444">0%</text>
+</svg></div>
+            <div class="acc-info">
+              <span class="acc-label" style="color:#f472b6">Adult / Pornography</span>
+              <div class="acc-pills">
+                <span class="pill pill-block">0 bloqué(s)</span>
+                <span class="pill pill-pass">12 non bloqué(s)</span>
+                <span class="pill" style="background:#1f2937;color:#ef4444">0% OK</span>
+                <span style="background:#7f1d1d;color:#fca5a5;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">CRITIQUE</span>
+              </div>
+            </div>
+            <span class="acc-arrow" id="cat_adult_arrow">▶</span>
+          </button>
+          <div class="acc-body" id="cat_adult" style="display:none">
+            <table>
+              <thead><tr><th></th><th>Nom</th><th>URL</th><th>Résultat</th><th>Temps</th></tr></thead>
+              <tbody><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">BongaCams</td>
+              <td class="td-url"><a href="https://bongacams.com" target="_blank" rel="noopener">https://bongacams.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">365 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Brazzers</td>
+              <td class="td-url"><a href="https://www.brazzers.com" target="_blank" rel="noopener">https://www.brazzers.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">1635 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Chaturbate</td>
+              <td class="td-url"><a href="https://chaturbate.com" target="_blank" rel="noopener">https://chaturbate.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">580 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">LiveJasmin</td>
+              <td class="td-url"><a href="https://www.livejasmin.com" target="_blank" rel="noopener">https://www.livejasmin.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">1202 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">MyFreeCams</td>
+              <td class="td-url"><a href="https://www.myfreecams.com" target="_blank" rel="noopener">https://www.myfreecams.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">752 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">OnlyFans</td>
+              <td class="td-url"><a href="https://onlyfans.com" target="_blank" rel="noopener">https://onlyfans.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">255 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Pornhub</td>
+              <td class="td-url"><a href="https://www.pornhub.com" target="_blank" rel="noopener">https://www.pornhub.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">586 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Redtube</td>
+              <td class="td-url"><a href="https://www.redtube.com" target="_blank" rel="noopener">https://www.redtube.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">722 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Stripchat</td>
+              <td class="td-url"><a href="https://stripchat.com" target="_blank" rel="noopener">https://stripchat.com</a></td>
+              <td style="color:#dc2626">HTTP 406 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">274 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">YouPorn</td>
+              <td class="td-url"><a href="https://www.youporn.com" target="_blank" rel="noopener">https://www.youporn.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">721 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">xhamster</td>
+              <td class="td-url"><a href="https://xhamster.com" target="_blank" rel="noopener">https://xhamster.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">937 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">xvideos</td>
+              <td class="td-url"><a href="https://www.xvideos.com" target="_blank" rel="noopener">https://www.xvideos.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">579 ms</td>
+            </tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggleAcc('cat_ai_llm')" style="border-left:3px solid #a78bfa">
+            <div class="acc-donut"><svg width="80" height="80" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#1f2937" stroke-width="12"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#dc2626" stroke-width="12"
+    stroke-dasharray="188.5 188.4954" stroke-dashoffset="0"
+    transform="rotate(-90 40 40)"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#22c55e" stroke-width="12"
+    stroke-dasharray="0.0 188.4954" stroke-dashoffset="-188.5"
+    transform="rotate(-90 40 40)"/>
+  <text x="40" y="41" text-anchor="middle" dominant-baseline="middle"
+    font-size="11" font-weight="700" fill="#ef4444">0%</text>
+</svg></div>
+            <div class="acc-info">
+              <span class="acc-label" style="color:#a78bfa">AI / LLM</span>
+              <div class="acc-pills">
+                <span class="pill pill-block">0 bloqué(s)</span>
+                <span class="pill pill-pass">8 non bloqué(s)</span>
+                <span class="pill" style="background:#1f2937;color:#ef4444">0% OK</span>
+                <span style="background:#1e3a5f;color:#93c5fd;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">MINEUR</span>
+              </div>
+            </div>
+            <span class="acc-arrow" id="cat_ai_llm_arrow">▶</span>
+          </button>
+          <div class="acc-body" id="cat_ai_llm" style="display:none">
+            <table>
+              <thead><tr><th></th><th>Nom</th><th>URL</th><th>Résultat</th><th>Temps</th></tr></thead>
+              <tbody><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">ChatGPT / OpenAI</td>
+              <td class="td-url"><a href="https://chat.openai.com" target="_blank" rel="noopener">https://chat.openai.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">777 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Claude (Anthropic)</td>
+              <td class="td-url"><a href="https://claude.ai" target="_blank" rel="noopener">https://claude.ai</a></td>
+              <td style="color:#dc2626">HTTP 403 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">431 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Google Gemini</td>
+              <td class="td-url"><a href="https://gemini.google.com" target="_blank" rel="noopener">https://gemini.google.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">382 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Grok (xAI)</td>
+              <td class="td-url"><a href="https://grok.x.ai" target="_blank" rel="noopener">https://grok.x.ai</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">770 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Hugging Face</td>
+              <td class="td-url"><a href="https://huggingface.co" target="_blank" rel="noopener">https://huggingface.co</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">525 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Microsoft Copilot</td>
+              <td class="td-url"><a href="https://copilot.microsoft.com" target="_blank" rel="noopener">https://copilot.microsoft.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">354 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Mistral AI</td>
+              <td class="td-url"><a href="https://chat.mistral.ai" target="_blank" rel="noopener">https://chat.mistral.ai</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">1550 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Perplexity AI</td>
+              <td class="td-url"><a href="https://www.perplexity.ai" target="_blank" rel="noopener">https://www.perplexity.ai</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">168 ms</td>
+            </tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggleAcc('cat_anonymizer')" style="border-left:3px solid #6ee7b7">
+            <div class="acc-donut"><svg width="80" height="80" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#1f2937" stroke-width="12"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#dc2626" stroke-width="12"
+    stroke-dasharray="188.5 188.4954" stroke-dashoffset="0"
+    transform="rotate(-90 40 40)"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#22c55e" stroke-width="12"
+    stroke-dasharray="0.0 188.4954" stroke-dashoffset="-188.5"
+    transform="rotate(-90 40 40)"/>
+  <text x="40" y="41" text-anchor="middle" dominant-baseline="middle"
+    font-size="11" font-weight="700" fill="#ef4444">0%</text>
+</svg></div>
+            <div class="acc-info">
+              <span class="acc-label" style="color:#6ee7b7">Anonymizers</span>
+              <div class="acc-pills">
+                <span class="pill pill-block">0 bloqué(s)</span>
+                <span class="pill pill-pass">3 non bloqué(s)</span>
+                <span class="pill" style="background:#1f2937;color:#ef4444">0% OK</span>
+                <span style="background:#431407;color:#fdba74;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">MAJEUR</span>
+              </div>
+            </div>
+            <span class="acc-arrow" id="cat_anonymizer_arrow">▶</span>
+          </button>
+          <div class="acc-body" id="cat_anonymizer" style="display:none">
+            <table>
+              <thead><tr><th></th><th>Nom</th><th>URL</th><th>Résultat</th><th>Temps</th></tr></thead>
+              <tbody><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">ProxySite</td>
+              <td class="td-url"><a href="https://www.proxysite.com" target="_blank" rel="noopener">https://www.proxysite.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">608 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Tor Project</td>
+              <td class="td-url"><a href="https://www.torproject.org" target="_blank" rel="noopener">https://www.torproject.org</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">620 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">hide.me proxy</td>
+              <td class="td-url"><a href="https://hide.me/en/proxy" target="_blank" rel="noopener">https://hide.me/en/proxy</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">370 ms</td>
+            </tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggleAcc('cat_cloud_pro')" style="border-left:3px solid #60a5fa">
+            <div class="acc-donut"><svg width="80" height="80" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#1f2937" stroke-width="12"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#dc2626" stroke-width="12"
+    stroke-dasharray="164.93 188.4954" stroke-dashoffset="0"
+    transform="rotate(-90 40 40)"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#22c55e" stroke-width="12"
+    stroke-dasharray="23.56 188.4954" stroke-dashoffset="-164.93"
+    transform="rotate(-90 40 40)"/>
+  <text x="40" y="41" text-anchor="middle" dominant-baseline="middle"
+    font-size="11" font-weight="700" fill="#ef4444">12%</text>
+</svg></div>
+            <div class="acc-info">
+              <span class="acc-label" style="color:#60a5fa">Cloud Storage Pro</span>
+              <div class="acc-pills">
+                <span class="pill pill-block">1 bloqué(s)</span>
+                <span class="pill pill-pass">7 non bloqué(s)</span>
+                <span class="pill" style="background:#1f2937;color:#ef4444">12% OK</span>
+                <span style="background:#1e3a5f;color:#93c5fd;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">MINEUR</span>
+              </div>
+            </div>
+            <span class="acc-arrow" id="cat_cloud_pro_arrow">▶</span>
+          </button>
+          <div class="acc-body" id="cat_cloud_pro" style="display:none">
+            <table>
+              <thead><tr><th></th><th>Nom</th><th>URL</th><th>Résultat</th><th>Temps</th></tr></thead>
+              <tbody><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Box</td>
+              <td class="td-url"><a href="https://www.box.com" target="_blank" rel="noopener">https://www.box.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">347 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Dropbox</td>
+              <td class="td-url"><a href="https://www.dropbox.com" target="_blank" rel="noopener">https://www.dropbox.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">1078 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Google Drive</td>
+              <td class="td-url"><a href="https://drive.google.com" target="_blank" rel="noopener">https://drive.google.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">1089 ms</td>
+            </tr><tr>
+              <td style="color:#16a34a;font-size:1.05em;width:28px">[OK]</td>
+              <td class="td-name">Nextcloud demo</td>
+              <td class="td-url"><a href="https://demo.nextcloud.com" target="_blank" rel="noopener">https://demo.nextcloud.com</a></td>
+              <td style="color:#16a34a">Connection refused / blocked</td>
+              <td style="color:#6b7280;white-space:nowrap">8035 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">OneDrive</td>
+              <td class="td-url"><a href="https://onedrive.live.com" target="_blank" rel="noopener">https://onedrive.live.com</a></td>
+              <td style="color:#dc2626">HTTP 403 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">718 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">SharePoint Online</td>
+              <td class="td-url"><a href="https://sharepoint.com" target="_blank" rel="noopener">https://sharepoint.com</a></td>
+              <td style="color:#dc2626">HTTP 403 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">2142 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">iCloud</td>
+              <td class="td-url"><a href="https://www.icloud.com" target="_blank" rel="noopener">https://www.icloud.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">330 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">pCloud</td>
+              <td class="td-url"><a href="https://www.pcloud.com" target="_blank" rel="noopener">https://www.pcloud.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">348 ms</td>
+            </tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggleAcc('cat_crypto')" style="border-left:3px solid #fbbf24">
+            <div class="acc-donut"><svg width="80" height="80" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#1f2937" stroke-width="12"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#dc2626" stroke-width="12"
+    stroke-dasharray="188.5 188.4954" stroke-dashoffset="0"
+    transform="rotate(-90 40 40)"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#22c55e" stroke-width="12"
+    stroke-dasharray="0.0 188.4954" stroke-dashoffset="-188.5"
+    transform="rotate(-90 40 40)"/>
+  <text x="40" y="41" text-anchor="middle" dominant-baseline="middle"
+    font-size="11" font-weight="700" fill="#ef4444">0%</text>
+</svg></div>
+            <div class="acc-info">
+              <span class="acc-label" style="color:#fbbf24">Cryptocurrency</span>
+              <div class="acc-pills">
+                <span class="pill pill-block">0 bloqué(s)</span>
+                <span class="pill pill-pass">10 non bloqué(s)</span>
+                <span class="pill" style="background:#1f2937;color:#ef4444">0% OK</span>
+                <span style="background:#431407;color:#fdba74;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">MAJEUR</span>
+              </div>
+            </div>
+            <span class="acc-arrow" id="cat_crypto_arrow">▶</span>
+          </button>
+          <div class="acc-body" id="cat_crypto" style="display:none">
+            <table>
+              <thead><tr><th></th><th>Nom</th><th>URL</th><th>Résultat</th><th>Temps</th></tr></thead>
+              <tbody><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Binance</td>
+              <td class="td-url"><a href="https://www.binance.com" target="_blank" rel="noopener">https://www.binance.com</a></td>
+              <td style="color:#dc2626">HTTP 202 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">263 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Bitget</td>
+              <td class="td-url"><a href="https://www.bitget.com" target="_blank" rel="noopener">https://www.bitget.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">606 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Bybit</td>
+              <td class="td-url"><a href="https://www.bybit.com" target="_blank" rel="noopener">https://www.bybit.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">298 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">CoinMarketCap</td>
+              <td class="td-url"><a href="https://coinmarketcap.com" target="_blank" rel="noopener">https://coinmarketcap.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">515 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Coinbase</td>
+              <td class="td-url"><a href="https://www.coinbase.com" target="_blank" rel="noopener">https://www.coinbase.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">923 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Etherscan</td>
+              <td class="td-url"><a href="https://etherscan.io" target="_blank" rel="noopener">https://etherscan.io</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">732 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Kraken</td>
+              <td class="td-url"><a href="https://www.kraken.com" target="_blank" rel="noopener">https://www.kraken.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">497 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">KuCoin</td>
+              <td class="td-url"><a href="https://www.kucoin.com" target="_blank" rel="noopener">https://www.kucoin.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">744 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">LocalBitcoins</td>
+              <td class="td-url"><a href="https://localbitcoins.com" target="_blank" rel="noopener">https://localbitcoins.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">504 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">OKX</td>
+              <td class="td-url"><a href="https://www.okx.com" target="_blank" rel="noopener">https://www.okx.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">950 ms</td>
+            </tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggleAcc('cat_darkweb')" style="border-left:3px solid #6b7280">
+            <div class="acc-donut"><svg width="80" height="80" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#1f2937" stroke-width="12"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#dc2626" stroke-width="12"
+    stroke-dasharray="188.5 188.4954" stroke-dashoffset="0"
+    transform="rotate(-90 40 40)"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#22c55e" stroke-width="12"
+    stroke-dasharray="0.0 188.4954" stroke-dashoffset="-188.5"
+    transform="rotate(-90 40 40)"/>
+  <text x="40" y="41" text-anchor="middle" dominant-baseline="middle"
+    font-size="11" font-weight="700" fill="#ef4444">0%</text>
+</svg></div>
+            <div class="acc-info">
+              <span class="acc-label" style="color:#6b7280">Dark Web Adjacent</span>
+              <div class="acc-pills">
+                <span class="pill pill-block">0 bloqué(s)</span>
+                <span class="pill pill-pass">6 non bloqué(s)</span>
+                <span class="pill" style="background:#1f2937;color:#ef4444">0% OK</span>
+                <span style="background:#7f1d1d;color:#fca5a5;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">CRITIQUE</span>
+              </div>
+            </div>
+            <span class="acc-arrow" id="cat_darkweb_arrow">▶</span>
+          </button>
+          <div class="acc-body" id="cat_darkweb" style="display:none">
+            <table>
+              <thead><tr><th></th><th>Nom</th><th>URL</th><th>Résultat</th><th>Temps</th></tr></thead>
+              <tbody><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Ahmia (Tor search)</td>
+              <td class="td-url"><a href="https://ahmia.fi" target="_blank" rel="noopener">https://ahmia.fi</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">413 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Dark.fail</td>
+              <td class="td-url"><a href="https://dark.fail" target="_blank" rel="noopener">https://dark.fail</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">401 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Freenet Project</td>
+              <td class="td-url"><a href="https://freenetproject.org" target="_blank" rel="noopener">https://freenetproject.org</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">680 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">I2P Project</td>
+              <td class="td-url"><a href="https://geti2p.net" target="_blank" rel="noopener">https://geti2p.net</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">1052 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">The Hidden Wiki mirror</td>
+              <td class="td-url"><a href="https://thehiddenwiki.org" target="_blank" rel="noopener">https://thehiddenwiki.org</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">489 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">ZeroNet</td>
+              <td class="td-url"><a href="https://zeronet.io" target="_blank" rel="noopener">https://zeronet.io</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">618 ms</td>
+            </tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggleAcc('cat_data_exfil')" style="border-left:3px solid #fb7185">
+            <div class="acc-donut"><svg width="80" height="80" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#1f2937" stroke-width="12"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#dc2626" stroke-width="12"
+    stroke-dasharray="141.37 188.4954" stroke-dashoffset="0"
+    transform="rotate(-90 40 40)"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#22c55e" stroke-width="12"
+    stroke-dasharray="47.12 188.4954" stroke-dashoffset="-141.37"
+    transform="rotate(-90 40 40)"/>
+  <text x="40" y="41" text-anchor="middle" dominant-baseline="middle"
+    font-size="11" font-weight="700" fill="#ef4444">25%</text>
+</svg></div>
+            <div class="acc-info">
+              <span class="acc-label" style="color:#fb7185">Data Exfiltration</span>
+              <div class="acc-pills">
+                <span class="pill pill-block">1 bloqué(s)</span>
+                <span class="pill pill-pass">3 non bloqué(s)</span>
+                <span class="pill" style="background:#1f2937;color:#ef4444">25% OK</span>
+                <span style="background:#7f1d1d;color:#fca5a5;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">CRITIQUE</span>
+              </div>
+            </div>
+            <span class="acc-arrow" id="cat_data_exfil_arrow">▶</span>
+          </button>
+          <div class="acc-body" id="cat_data_exfil" style="display:none">
+            <table>
+              <thead><tr><th></th><th>Nom</th><th>URL</th><th>Résultat</th><th>Temps</th></tr></thead>
+              <tbody><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Pastebin</td>
+              <td class="td-url"><a href="https://pastebin.com" target="_blank" rel="noopener">https://pastebin.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">385 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">gofile.io</td>
+              <td class="td-url"><a href="https://gofile.io" target="_blank" rel="noopener">https://gofile.io</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">379 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">rentry.co</td>
+              <td class="td-url"><a href="https://rentry.co" target="_blank" rel="noopener">https://rentry.co</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">247 ms</td>
+            </tr><tr>
+              <td style="color:#16a34a;font-size:1.05em;width:28px">[OK]</td>
+              <td class="td-name">transfer.sh</td>
+              <td class="td-url"><a href="https://transfer.sh" target="_blank" rel="noopener">https://transfer.sh</a></td>
+              <td style="color:#16a34a">Connection refused / blocked</td>
+              <td style="color:#6b7280;white-space:nowrap">2379 ms</td>
+            </tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggleAcc('cat_file_sharing')" style="border-left:3px solid #a3e635">
+            <div class="acc-donut"><svg width="80" height="80" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#1f2937" stroke-width="12"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#dc2626" stroke-width="12"
+    stroke-dasharray="188.5 188.4954" stroke-dashoffset="0"
+    transform="rotate(-90 40 40)"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#22c55e" stroke-width="12"
+    stroke-dasharray="0.0 188.4954" stroke-dashoffset="-188.5"
+    transform="rotate(-90 40 40)"/>
+  <text x="40" y="41" text-anchor="middle" dominant-baseline="middle"
+    font-size="11" font-weight="700" fill="#ef4444">0%</text>
+</svg></div>
+            <div class="acc-info">
+              <span class="acc-label" style="color:#a3e635">File Sharing</span>
+              <div class="acc-pills">
+                <span class="pill pill-block">0 bloqué(s)</span>
+                <span class="pill pill-pass">3 non bloqué(s)</span>
+                <span class="pill" style="background:#1f2937;color:#ef4444">0% OK</span>
+                <span style="background:#1e3a5f;color:#93c5fd;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">MINEUR</span>
+              </div>
+            </div>
+            <span class="acc-arrow" id="cat_file_sharing_arrow">▶</span>
+          </button>
+          <div class="acc-body" id="cat_file_sharing" style="display:none">
+            <table>
+              <thead><tr><th></th><th>Nom</th><th>URL</th><th>Résultat</th><th>Temps</th></tr></thead>
+              <tbody><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Mediafire</td>
+              <td class="td-url"><a href="https://www.mediafire.com" target="_blank" rel="noopener">https://www.mediafire.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">421 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Mega.nz</td>
+              <td class="td-url"><a href="https://mega.nz" target="_blank" rel="noopener">https://mega.nz</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">362 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">WeTransfer</td>
+              <td class="td-url"><a href="https://wetransfer.com" target="_blank" rel="noopener">https://wetransfer.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">373 ms</td>
+            </tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggleAcc('cat_gambling')" style="border-left:3px solid #fb923c">
+            <div class="acc-donut"><svg width="80" height="80" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#1f2937" stroke-width="12"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#dc2626" stroke-width="12"
+    stroke-dasharray="188.5 188.4954" stroke-dashoffset="0"
+    transform="rotate(-90 40 40)"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#22c55e" stroke-width="12"
+    stroke-dasharray="0.0 188.4954" stroke-dashoffset="-188.5"
+    transform="rotate(-90 40 40)"/>
+  <text x="40" y="41" text-anchor="middle" dominant-baseline="middle"
+    font-size="11" font-weight="700" fill="#ef4444">0%</text>
+</svg></div>
+            <div class="acc-info">
+              <span class="acc-label" style="color:#fb923c">Gambling</span>
+              <div class="acc-pills">
+                <span class="pill pill-block">0 bloqué(s)</span>
+                <span class="pill pill-pass">8 non bloqué(s)</span>
+                <span class="pill" style="background:#1f2937;color:#ef4444">0% OK</span>
+                <span style="background:#431407;color:#fdba74;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">MAJEUR</span>
+              </div>
+            </div>
+            <span class="acc-arrow" id="cat_gambling_arrow">▶</span>
+          </button>
+          <div class="acc-body" id="cat_gambling" style="display:none">
+            <table>
+              <thead><tr><th></th><th>Nom</th><th>URL</th><th>Résultat</th><th>Temps</th></tr></thead>
+              <tbody><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Bet365</td>
+              <td class="td-url"><a href="https://www.bet365.com" target="_blank" rel="noopener">https://www.bet365.com</a></td>
+              <td style="color:#dc2626">HTTP 403 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">684 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Betclic</td>
+              <td class="td-url"><a href="https://www.betclic.fr" target="_blank" rel="noopener">https://www.betclic.fr</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">851 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">PMU</td>
+              <td class="td-url"><a href="https://www.pmu.fr" target="_blank" rel="noopener">https://www.pmu.fr</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">294 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Parions Sport FDJ</td>
+              <td class="td-url"><a href="https://www.parionssport.fdj.fr" target="_blank" rel="noopener">https://www.parionssport.fdj.fr</a></td>
+              <td style="color:#dc2626">HTTP 403 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">653 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">PokerStars</td>
+              <td class="td-url"><a href="https://www.pokerstars.com" target="_blank" rel="noopener">https://www.pokerstars.com</a></td>
+              <td style="color:#dc2626">HTTP 403 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">355 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Unibet</td>
+              <td class="td-url"><a href="https://www.unibet.fr" target="_blank" rel="noopener">https://www.unibet.fr</a></td>
+              <td style="color:#dc2626">HTTP 403 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">222 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Winamax</td>
+              <td class="td-url"><a href="https://www.winamax.fr" target="_blank" rel="noopener">https://www.winamax.fr</a></td>
+              <td style="color:#dc2626">HTTP 403 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">236 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">gambling.com</td>
+              <td class="td-url"><a href="https://www.gambling.com" target="_blank" rel="noopener">https://www.gambling.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">859 ms</td>
+            </tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggleAcc('cat_hacking_tools')" style="border-left:3px solid #c084fc">
+            <div class="acc-donut"><svg width="80" height="80" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#1f2937" stroke-width="12"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#dc2626" stroke-width="12"
+    stroke-dasharray="188.5 188.4954" stroke-dashoffset="0"
+    transform="rotate(-90 40 40)"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#22c55e" stroke-width="12"
+    stroke-dasharray="0.0 188.4954" stroke-dashoffset="-188.5"
+    transform="rotate(-90 40 40)"/>
+  <text x="40" y="41" text-anchor="middle" dominant-baseline="middle"
+    font-size="11" font-weight="700" fill="#ef4444">0%</text>
+</svg></div>
+            <div class="acc-info">
+              <span class="acc-label" style="color:#c084fc">Hacking Tools</span>
+              <div class="acc-pills">
+                <span class="pill pill-block">0 bloqué(s)</span>
+                <span class="pill pill-pass">5 non bloqué(s)</span>
+                <span class="pill" style="background:#1f2937;color:#ef4444">0% OK</span>
+                <span style="background:#431407;color:#fdba74;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">MAJEUR</span>
+              </div>
+            </div>
+            <span class="acc-arrow" id="cat_hacking_tools_arrow">▶</span>
+          </button>
+          <div class="acc-body" id="cat_hacking_tools" style="display:none">
+            <table>
+              <thead><tr><th></th><th>Nom</th><th>URL</th><th>Résultat</th><th>Temps</th></tr></thead>
+              <tbody><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">0day.today</td>
+              <td class="td-url"><a href="https://0day.today" target="_blank" rel="noopener">https://0day.today</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">480 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Exploit-DB</td>
+              <td class="td-url"><a href="https://www.exploit-db.com" target="_blank" rel="noopener">https://www.exploit-db.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">483 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">HackForums</td>
+              <td class="td-url"><a href="https://hackforums.net" target="_blank" rel="noopener">https://hackforums.net</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">767 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Kali Linux</td>
+              <td class="td-url"><a href="https://www.kali.org" target="_blank" rel="noopener">https://www.kali.org</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">628 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Shodan</td>
+              <td class="td-url"><a href="https://www.shodan.io" target="_blank" rel="noopener">https://www.shodan.io</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">173 ms</td>
+            </tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggleAcc('cat_malware')" style="border-left:3px solid #ef4444">
+            <div class="acc-donut"><svg width="80" height="80" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#1f2937" stroke-width="12"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#dc2626" stroke-width="12"
+    stroke-dasharray="150.8 188.4954" stroke-dashoffset="0"
+    transform="rotate(-90 40 40)"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#22c55e" stroke-width="12"
+    stroke-dasharray="37.7 188.4954" stroke-dashoffset="-150.8"
+    transform="rotate(-90 40 40)"/>
+  <text x="40" y="41" text-anchor="middle" dominant-baseline="middle"
+    font-size="11" font-weight="700" fill="#ef4444">20%</text>
+</svg></div>
+            <div class="acc-info">
+              <span class="acc-label" style="color:#ef4444">Malware / Threats</span>
+              <div class="acc-pills">
+                <span class="pill pill-block">1 bloqué(s)</span>
+                <span class="pill pill-pass">4 non bloqué(s)</span>
+                <span class="pill" style="background:#1f2937;color:#ef4444">20% OK</span>
+                <span style="background:#7f1d1d;color:#fca5a5;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">CRITIQUE</span>
+              </div>
+            </div>
+            <span class="acc-arrow" id="cat_malware_arrow">▶</span>
+          </button>
+          <div class="acc-body" id="cat_malware" style="display:none">
+            <table>
+              <thead><tr><th></th><th>Nom</th><th>URL</th><th>Résultat</th><th>Temps</th></tr></thead>
+              <tbody><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Malc0de exploit kit</td>
+              <td class="td-url"><a href="https://malc0de.com" target="_blank" rel="noopener">https://malc0de.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">737 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Malwarebytes blog</td>
+              <td class="td-url"><a href="https://www.malwarebytes.com/blog" target="_blank" rel="noopener">https://www.malwarebytes.com/blog</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">483 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Ransomware.org</td>
+              <td class="td-url"><a href="https://ransomware.org" target="_blank" rel="noopener">https://ransomware.org</a></td>
+              <td style="color:#dc2626">HTTP 403 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">543 ms</td>
+            </tr><tr>
+              <td style="color:#16a34a;font-size:1.05em;width:28px">[OK]</td>
+              <td class="td-name">URLhaus API</td>
+              <td class="td-url"><a href="http://urlhaus-api.abuse.ch/v1/" target="_blank" rel="noopener">http://urlhaus-api.abuse.ch/v1/</a></td>
+              <td style="color:#16a34a">Connection refused / blocked</td>
+              <td style="color:#6b7280;white-space:nowrap">8062 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">WiCAR malware test</td>
+              <td class="td-url"><a href="https://www.wicar.org/test-malware.html" target="_blank" rel="noopener">https://www.wicar.org/test-malware.html</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">746 ms</td>
+            </tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggleAcc('cat_neutral')" style="border-left:3px solid #4ade80">
+            <div class="acc-donut"><svg width="80" height="80" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#1f2937" stroke-width="12"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#dc2626" stroke-width="12"
+    stroke-dasharray="188.5 188.4954" stroke-dashoffset="0"
+    transform="rotate(-90 40 40)"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#22c55e" stroke-width="12"
+    stroke-dasharray="0.0 188.4954" stroke-dashoffset="-188.5"
+    transform="rotate(-90 40 40)"/>
+  <text x="40" y="41" text-anchor="middle" dominant-baseline="middle"
+    font-size="11" font-weight="700" fill="#ef4444">0%</text>
+</svg></div>
+            <div class="acc-info">
+              <span class="acc-label" style="color:#4ade80">Neutral Baselines</span>
+              <div class="acc-pills">
+                <span class="pill pill-block">0 bloqué(s)</span>
+                <span class="pill pill-pass">4 non bloqué(s)</span>
+                <span class="pill" style="background:#1f2937;color:#22c55e">100% OK</span>
+                <span style="background:#14532d;color:#86efac;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">OK</span>
+              </div>
+            </div>
+            <span class="acc-arrow" id="cat_neutral_arrow">▶</span>
+          </button>
+          <div class="acc-body" id="cat_neutral" style="display:none">
+            <table>
+              <thead><tr><th></th><th>Nom</th><th>URL</th><th>Résultat</th><th>Temps</th></tr></thead>
+              <tbody><tr>
+              <td style="color:#16a34a;font-size:1.05em;width:28px">[OK]</td>
+              <td class="td-name">GitHub</td>
+              <td class="td-url"><a href="https://www.github.com" target="_blank" rel="noopener">https://www.github.com</a></td>
+              <td style="color:#16a34a">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">464 ms</td>
+            </tr><tr>
+              <td style="color:#16a34a;font-size:1.05em;width:28px">[OK]</td>
+              <td class="td-name">Google</td>
+              <td class="td-url"><a href="https://www.google.com" target="_blank" rel="noopener">https://www.google.com</a></td>
+              <td style="color:#16a34a">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">389 ms</td>
+            </tr><tr>
+              <td style="color:#16a34a;font-size:1.05em;width:28px">[OK]</td>
+              <td class="td-name">Microsoft</td>
+              <td class="td-url"><a href="https://www.microsoft.com" target="_blank" rel="noopener">https://www.microsoft.com</a></td>
+              <td style="color:#16a34a">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">290 ms</td>
+            </tr><tr>
+              <td style="color:#16a34a;font-size:1.05em;width:28px">[OK]</td>
+              <td class="td-name">Wikipedia</td>
+              <td class="td-url"><a href="https://www.wikipedia.org" target="_blank" rel="noopener">https://www.wikipedia.org</a></td>
+              <td style="color:#16a34a">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">321 ms</td>
+            </tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggleAcc('cat_phishing')" style="border-left:3px solid #f97316">
+            <div class="acc-donut"><svg width="80" height="80" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#1f2937" stroke-width="12"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#dc2626" stroke-width="12"
+    stroke-dasharray="188.5 188.4954" stroke-dashoffset="0"
+    transform="rotate(-90 40 40)"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#22c55e" stroke-width="12"
+    stroke-dasharray="0.0 188.4954" stroke-dashoffset="-188.5"
+    transform="rotate(-90 40 40)"/>
+  <text x="40" y="41" text-anchor="middle" dominant-baseline="middle"
+    font-size="11" font-weight="700" fill="#ef4444">0%</text>
+</svg></div>
+            <div class="acc-info">
+              <span class="acc-label" style="color:#f97316">Phishing</span>
+              <div class="acc-pills">
+                <span class="pill pill-block">0 bloqué(s)</span>
+                <span class="pill pill-pass">2 non bloqué(s)</span>
+                <span class="pill" style="background:#1f2937;color:#ef4444">0% OK</span>
+                <span style="background:#7f1d1d;color:#fca5a5;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">CRITIQUE</span>
+              </div>
+            </div>
+            <span class="acc-arrow" id="cat_phishing_arrow">▶</span>
+          </button>
+          <div class="acc-body" id="cat_phishing" style="display:none">
+            <table>
+              <thead><tr><th></th><th>Nom</th><th>URL</th><th>Résultat</th><th>Temps</th></tr></thead>
+              <tbody><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">OpenPhish feed</td>
+              <td class="td-url"><a href="https://openphish.com/feed.txt" target="_blank" rel="noopener">https://openphish.com/feed.txt</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">605 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">PhishTank</td>
+              <td class="td-url"><a href="https://phishtank.org/" target="_blank" rel="noopener">https://phishtank.org/</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">943 ms</td>
+            </tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggleAcc('cat_social_media')" style="border-left:3px solid #818cf8">
+            <div class="acc-donut"><svg width="80" height="80" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#1f2937" stroke-width="12"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#dc2626" stroke-width="12"
+    stroke-dasharray="188.5 188.4954" stroke-dashoffset="0"
+    transform="rotate(-90 40 40)"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#22c55e" stroke-width="12"
+    stroke-dasharray="0.0 188.4954" stroke-dashoffset="-188.5"
+    transform="rotate(-90 40 40)"/>
+  <text x="40" y="41" text-anchor="middle" dominant-baseline="middle"
+    font-size="11" font-weight="700" fill="#ef4444">0%</text>
+</svg></div>
+            <div class="acc-info">
+              <span class="acc-label" style="color:#818cf8">Social Media</span>
+              <div class="acc-pills">
+                <span class="pill pill-block">0 bloqué(s)</span>
+                <span class="pill pill-pass">16 non bloqué(s)</span>
+                <span class="pill" style="background:#1f2937;color:#ef4444">0% OK</span>
+                <span style="background:#1e3a5f;color:#93c5fd;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">MINEUR</span>
+              </div>
+            </div>
+            <span class="acc-arrow" id="cat_social_media_arrow">▶</span>
+          </button>
+          <div class="acc-body" id="cat_social_media" style="display:none">
+            <table>
+              <thead><tr><th></th><th>Nom</th><th>URL</th><th>Résultat</th><th>Temps</th></tr></thead>
+              <tbody><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">BeReal</td>
+              <td class="td-url"><a href="https://bere.al" target="_blank" rel="noopener">https://bere.al</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">731 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Discord</td>
+              <td class="td-url"><a href="https://discord.com" target="_blank" rel="noopener">https://discord.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">382 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Facebook</td>
+              <td class="td-url"><a href="https://www.facebook.com" target="_blank" rel="noopener">https://www.facebook.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">759 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Instagram</td>
+              <td class="td-url"><a href="https://www.instagram.com" target="_blank" rel="noopener">https://www.instagram.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">628 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">LinkedIn</td>
+              <td class="td-url"><a href="https://www.linkedin.com" target="_blank" rel="noopener">https://www.linkedin.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">549 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Mastodon</td>
+              <td class="td-url"><a href="https://mastodon.social" target="_blank" rel="noopener">https://mastodon.social</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">727 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Pinterest</td>
+              <td class="td-url"><a href="https://www.pinterest.com" target="_blank" rel="noopener">https://www.pinterest.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">769 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Reddit</td>
+              <td class="td-url"><a href="https://www.reddit.com" target="_blank" rel="noopener">https://www.reddit.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">242 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Signal</td>
+              <td class="td-url"><a href="https://signal.org" target="_blank" rel="noopener">https://signal.org</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">359 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Snapchat</td>
+              <td class="td-url"><a href="https://www.snapchat.com" target="_blank" rel="noopener">https://www.snapchat.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">531 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Telegram CDN</td>
+              <td class="td-url"><a href="https://desktop.telegram.org" target="_blank" rel="noopener">https://desktop.telegram.org</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">1930 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Telegram Web</td>
+              <td class="td-url"><a href="https://web.telegram.org" target="_blank" rel="noopener">https://web.telegram.org</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">279 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">TikTok</td>
+              <td class="td-url"><a href="https://www.tiktok.com" target="_blank" rel="noopener">https://www.tiktok.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">617 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Twitch</td>
+              <td class="td-url"><a href="https://www.twitch.tv" target="_blank" rel="noopener">https://www.twitch.tv</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">326 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Twitter / X</td>
+              <td class="td-url"><a href="https://twitter.com" target="_blank" rel="noopener">https://twitter.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">767 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">WhatsApp Web</td>
+              <td class="td-url"><a href="https://web.whatsapp.com" target="_blank" rel="noopener">https://web.whatsapp.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">404 ms</td>
+            </tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggleAcc('cat_streaming')" style="border-left:3px solid #34d399">
+            <div class="acc-donut"><svg width="80" height="80" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#1f2937" stroke-width="12"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#dc2626" stroke-width="12"
+    stroke-dasharray="188.5 188.4954" stroke-dashoffset="0"
+    transform="rotate(-90 40 40)"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#22c55e" stroke-width="12"
+    stroke-dasharray="0.0 188.4954" stroke-dashoffset="-188.5"
+    transform="rotate(-90 40 40)"/>
+  <text x="40" y="41" text-anchor="middle" dominant-baseline="middle"
+    font-size="11" font-weight="700" fill="#ef4444">0%</text>
+</svg></div>
+            <div class="acc-info">
+              <span class="acc-label" style="color:#34d399">Streaming / Media</span>
+              <div class="acc-pills">
+                <span class="pill pill-block">0 bloqué(s)</span>
+                <span class="pill pill-pass">10 non bloqué(s)</span>
+                <span class="pill" style="background:#1f2937;color:#ef4444">0% OK</span>
+                <span style="background:#1e3a5f;color:#93c5fd;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">MINEUR</span>
+              </div>
+            </div>
+            <span class="acc-arrow" id="cat_streaming_arrow">▶</span>
+          </button>
+          <div class="acc-body" id="cat_streaming" style="display:none">
+            <table>
+              <thead><tr><th></th><th>Nom</th><th>URL</th><th>Résultat</th><th>Temps</th></tr></thead>
+              <tbody><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Apple TV+</td>
+              <td class="td-url"><a href="https://tv.apple.com" target="_blank" rel="noopener">https://tv.apple.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">385 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Canal+</td>
+              <td class="td-url"><a href="https://www.canalplus.com" target="_blank" rel="noopener">https://www.canalplus.com</a></td>
+              <td style="color:#dc2626">HTTP 403 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">344 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Dailymotion</td>
+              <td class="td-url"><a href="https://www.dailymotion.com" target="_blank" rel="noopener">https://www.dailymotion.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">397 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Deezer</td>
+              <td class="td-url"><a href="https://www.deezer.com" target="_blank" rel="noopener">https://www.deezer.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">855 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Disney+</td>
+              <td class="td-url"><a href="https://www.disneyplus.com" target="_blank" rel="noopener">https://www.disneyplus.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">641 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Molotov TV</td>
+              <td class="td-url"><a href="https://www.molotov.tv" target="_blank" rel="noopener">https://www.molotov.tv</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">399 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Netflix</td>
+              <td class="td-url"><a href="https://www.netflix.com" target="_blank" rel="noopener">https://www.netflix.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">1238 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Prime Video</td>
+              <td class="td-url"><a href="https://www.primevideo.com" target="_blank" rel="noopener">https://www.primevideo.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">1659 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Spotify</td>
+              <td class="td-url"><a href="https://www.spotify.com" target="_blank" rel="noopener">https://www.spotify.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">863 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">YouTube</td>
+              <td class="td-url"><a href="https://www.youtube.com" target="_blank" rel="noopener">https://www.youtube.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">451 ms</td>
+            </tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-header" onclick="toggleAcc('cat_vpn')" style="border-left:3px solid #38bdf8">
+            <div class="acc-donut"><svg width="80" height="80" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#1f2937" stroke-width="12"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#dc2626" stroke-width="12"
+    stroke-dasharray="188.5 188.4954" stroke-dashoffset="0"
+    transform="rotate(-90 40 40)"/>
+  <circle cx="40" cy="40" r="30" fill="none" stroke="#22c55e" stroke-width="12"
+    stroke-dasharray="0.0 188.4954" stroke-dashoffset="-188.5"
+    transform="rotate(-90 40 40)"/>
+  <text x="40" y="41" text-anchor="middle" dominant-baseline="middle"
+    font-size="11" font-weight="700" fill="#ef4444">0%</text>
+</svg></div>
+            <div class="acc-info">
+              <span class="acc-label" style="color:#38bdf8">VPN</span>
+              <div class="acc-pills">
+                <span class="pill pill-block">0 bloqué(s)</span>
+                <span class="pill pill-pass">4 non bloqué(s)</span>
+                <span class="pill" style="background:#1f2937;color:#ef4444">0% OK</span>
+                <span style="background:#431407;color:#fdba74;padding:.15rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;letter-spacing:.5px">MAJEUR</span>
+              </div>
+            </div>
+            <span class="acc-arrow" id="cat_vpn_arrow">▶</span>
+          </button>
+          <div class="acc-body" id="cat_vpn" style="display:none">
+            <table>
+              <thead><tr><th></th><th>Nom</th><th>URL</th><th>Résultat</th><th>Temps</th></tr></thead>
+              <tbody><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">ExpressVPN</td>
+              <td class="td-url"><a href="https://www.expressvpn.com" target="_blank" rel="noopener">https://www.expressvpn.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">275 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Mullvad</td>
+              <td class="td-url"><a href="https://mullvad.net" target="_blank" rel="noopener">https://mullvad.net</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">354 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">NordVPN</td>
+              <td class="td-url"><a href="https://nordvpn.com" target="_blank" rel="noopener">https://nordvpn.com</a></td>
+              <td style="color:#dc2626">HTTP 403 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">223 ms</td>
+            </tr><tr>
+              <td style="color:#dc2626;font-size:1.05em;width:28px">[X]</td>
+              <td class="td-name">Proton VPN</td>
+              <td class="td-url"><a href="https://protonvpn.com" target="_blank" rel="noopener">https://protonvpn.com</a></td>
+              <td style="color:#dc2626">HTTP 200 — Reachable</td>
+              <td style="color:#6b7280;white-space:nowrap">2017 ms</td>
+            </tr></tbody>
+            </table>
+          </div>
+        </div>
+
+  <h2>EICAR / Malware Downloads</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>Test</th><th>URL</th><th>Catégorie</th><th>Résultat</th><th>Temps</th></tr></thead>
+    <tbody><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>EICAR .com (HTTP)</td><td>http://www.eicar.org/download/eicar.com</td><td>eicar</td><td style="color:#16a34a">Payload absent — bloqué</td><td style="color:#6b7280;white-space:nowrap">8392 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>EICAR .txt (HTTPS)</td><td>https://www.eicar.org/download/eicar.com.txt</td><td>eicar</td><td style="color:#16a34a">Timeout — bloqué</td><td style="color:#6b7280;white-space:nowrap">9421 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>EICAR .zip single</td><td>https://www.eicar.org/download/eicar_com.zip</td><td>eicar_zip</td><td style="color:#16a34a">Timeout — bloqué</td><td style="color:#6b7280;white-space:nowrap">8337 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>EICAR .zip double</td><td>https://www.eicar.org/download/eicarcom2.zip</td><td>eicar_zip</td><td style="color:#16a34a">Payload absent — bloqué</td><td style="color:#6b7280;white-space:nowrap">7770 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>WiCAR JS crypto miner</td><td>https://www.wicar.org/data/javascript_crypto_miner.html</td><td>wicar</td><td style="color:#16a34a">Payload absent — bloqué</td><td style="color:#6b7280;white-space:nowrap">356 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>WiCAR PDF exploit</td><td>https://www.wicar.org/data/ms14_064_ole_code_execution.pdf</td><td>wicar</td><td style="color:#16a34a">Payload absent — bloqué</td><td style="color:#6b7280;white-space:nowrap">355 ms</td></tr></tbody>
+  </table></div>
+
+  <h2>C2 / Malicious IP Connections</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>Test</th><th>IP</th><th>Port</th><th>Résultat</th><th>Temps</th></tr></thead>
+    <tbody><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>TOR Exit Node #2</td><td>185.220.101.1</td><td>9001</td><td style="color:#dc2626">TCP 185.220.101.1:9001 — NOT blocked</td><td style="color:#6b7280;white-space:nowrap">43 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>Sinkhole Shadowserver</td><td>198.199.123.17</td><td>80</td><td style="color:#dc2626">TCP 198.199.123.17:80 — NOT blocked</td><td style="color:#6b7280;white-space:nowrap">89 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Telnet port 23</td><td>telnet.lwp.io</td><td>23</td><td style="color:#16a34a">OS error: [Errno 11001] getaddrinfo failed</td><td style="color:#6b7280;white-space:nowrap">18 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>IRC C2 port 6667</td><td>irc.undernet.org</td><td>6667</td><td style="color:#dc2626">TCP irc.undernet.org:6667 — NOT blocked</td><td style="color:#6b7280;white-space:nowrap">92 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Loopback bypass</td><td>127.0.0.1</td><td>8080</td><td style="color:#16a34a">Refused — possibly blocked</td><td style="color:#6b7280;white-space:nowrap">2043 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Known bad abuse.ch</td><td>91.92.109.3</td><td>80</td><td style="color:#16a34a">Refused — possibly blocked</td><td style="color:#6b7280;white-space:nowrap">2224 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>RDP external 3389</td><td>scanme.nmap.org</td><td>3389</td><td style="color:#16a34a">Refused — possibly blocked</td><td style="color:#6b7280;white-space:nowrap">2851 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>SMB external 445</td><td>scanme.nmap.org</td><td>445</td><td style="color:#16a34a">Refused — possibly blocked</td><td style="color:#6b7280;white-space:nowrap">2826 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>TOR Exit Node #1</td><td>176.10.104.240</td><td>9001</td><td style="color:#16a34a">Timeout — firewalled</td><td style="color:#6b7280;white-space:nowrap">8014 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Bogon RFC6598</td><td>100.64.0.1</td><td>80</td><td style="color:#16a34a">Timeout — firewalled</td><td style="color:#6b7280;white-space:nowrap">8013 ms</td></tr></tbody>
+  </table></div>
+
+  <h2>DNS Filtering</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>Test</th><th>Domaine</th><th>Catégorie</th><th>Résultat</th><th>Temps</th></tr></thead>
+    <tbody><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>DoH Cloudflare</td><td>cloudflare-dns.com</td><td>doh_bypass</td><td style="color:#dc2626">Résolu → ['104.16.249.249', '104.16.248.249'] — NON filtré</td><td style="color:#6b7280;white-space:nowrap">20 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>DGA random domain</td><td>asjdhaksjdhaksjdh12839.com</td><td>dga</td><td style="color:#16a34a">NXDOMAIN / refusé — DNS filtering actif</td><td style="color:#6b7280;white-space:nowrap">22 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>Phishing category</td><td>phishing.testcategory.com</td><td>phishing</td><td style="color:#dc2626">Résolu → ['104.18.4.35', '104.18.5.35'] — NON filtré</td><td style="color:#6b7280;white-space:nowrap">28 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>DoH Google</td><td>dns.google</td><td>doh_bypass</td><td style="color:#dc2626">Résolu → ['8.8.8.8', '8.8.4.4'] — NON filtré</td><td style="color:#6b7280;white-space:nowrap">8 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>Typosquatting google</td><td>gooogle.com</td><td>typosquat</td><td style="color:#dc2626">Résolu → ['172.217.20.36'] — NON filtré</td><td style="color:#6b7280;white-space:nowrap">28 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>DoH Quad9</td><td>dns.quad9.net</td><td>doh_bypass</td><td style="color:#dc2626">Résolu → ['149.112.112.112', '9.9.9.9'] — NON filtré</td><td style="color:#6b7280;white-space:nowrap">7 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>Adult domain</td><td>www.pornhub.com</td><td>adult</td><td style="color:#dc2626">Résolu → ['66.254.114.41'] — NON filtré</td><td style="color:#6b7280;white-space:nowrap">2 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Normal google.com</td><td>www.google.com</td><td>neutral</td><td style="color:#16a34a">Résolu → ['142.251.155.119', '142.251.150.119', '142.251.153.119', '142.251.157.119', '142.251.151.119', '142.251.154.119', '142.251.152.119', '142.251.156.119']</td><td style="color:#6b7280;white-space:nowrap">1 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>Dark web Ahmia</td><td>ahmia.fi</td><td>darkweb</td><td style="color:#dc2626">Résolu → ['46.19.38.63'] — NON filtré</td><td style="color:#6b7280;white-space:nowrap">2 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Normal microsoft.com</td><td>www.microsoft.com</td><td>neutral</td><td style="color:#16a34a">Résolu → ['23.58.193.226']</td><td style="color:#6b7280;white-space:nowrap">7 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>Malware domain WiCAR</td><td>malware.wicar.org</td><td>malicious</td><td style="color:#dc2626">Résolu → ['208.94.116.246'] — NON filtré</td><td style="color:#6b7280;white-space:nowrap">182 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>Typosquatting microsoft</td><td>micosoft.com</td><td>typosquat</td><td style="color:#dc2626">Résolu → ['208.91.197.26'] — NON filtré</td><td style="color:#6b7280;white-space:nowrap">921 ms</td></tr></tbody>
+  </table></div>
+
+  <h2>SSL / TLS Inspection</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>Test</th><th>Hôte</th><th>Catégorie</th><th>Résultat</th><th>Temps</th></tr></thead>
+    <tbody><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Valid cert Google</td><td>www.google.com</td><td>valid</td><td style="color:#16a34a">Valide — TLSv1.3 / TLS_AES_256_GCM_SHA384</td><td style="color:#6b7280;white-space:nowrap">250 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Valid cert Microsoft</td><td>www.microsoft.com</td><td>valid</td><td style="color:#16a34a">Valide — TLSv1.3 / TLS_AES_256_GCM_SHA384</td><td style="color:#6b7280;white-space:nowrap">254 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Weak cipher RC4</td><td>rc4.badssl.com</td><td>weak_cipher</td><td style="color:#16a34a">SSL: [SSL: SSLV3_ALERT_HANDSHAKE_FAILURE] sslv3 alert handshake failure (_ssl.c:1032)</td><td style="color:#6b7280;white-space:nowrap">1501 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Weak cipher 3DES</td><td>3des.badssl.com</td><td>weak_cipher</td><td style="color:#16a34a">SSL: [SSL: SSLV3_ALERT_HANDSHAKE_FAILURE] sslv3 alert handshake failure (_ssl.c:1032)</td><td style="color:#6b7280;white-space:nowrap">3519 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>TLS 1.0</td><td>tls-v1-0.badssl.com</td><td>old_tls</td><td style="color:#16a34a">SSL: [SSL: SSLV3_ALERT_HANDSHAKE_FAILURE] sslv3 alert handshake failure (_ssl.c:1032)</td><td style="color:#6b7280;white-space:nowrap">336 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>TLS 1.1</td><td>tls-v1-1.badssl.com</td><td>old_tls</td><td style="color:#16a34a">SSL: [SSL: SSLV3_ALERT_HANDSHAKE_FAILURE] sslv3 alert handshake failure (_ssl.c:1032)</td><td style="color:#6b7280;white-space:nowrap">297 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>HTTP no encryption</td><td>http.badssl.com</td><td>no_tls</td><td style="color:#16a34a">SSL: [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1032)</td><td style="color:#6b7280;white-space:nowrap">334 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Self-signed cert</td><td>self-signed.badssl.com</td><td>self_signed</td><td style="color:#16a34a">SSL verify: CERTIFICATE_VERIFY_FAILED</td><td style="color:#6b7280;white-space:nowrap">6602 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Wrong host cert</td><td>wrong.host.badssl.com</td><td>wrong_host</td><td style="color:#16a34a">Connexion: timed out</td><td style="color:#6b7280;white-space:nowrap">8158 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Expired cert</td><td>expired.badssl.com</td><td>expired</td><td style="color:#16a34a">Connexion: _ssl.c:1015: The handshake operation timed out</td><td style="color:#6b7280;white-space:nowrap">8279 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Revoked cert</td><td>revoked.badssl.com</td><td>revoked</td><td style="color:#16a34a">Connexion: timed out</td><td style="color:#6b7280;white-space:nowrap">8105 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Untrusted root</td><td>untrusted-root.badssl.com</td><td>untrusted_root</td><td style="color:#16a34a">Connexion: _ssl.c:1015: The handshake operation timed out</td><td style="color:#6b7280;white-space:nowrap">9254 ms</td></tr></tbody>
+  </table></div>
+
+  <h2>Application Layer — WAF / IPS</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>Test</th><th>Catégorie</th><th>Description</th><th>Résultat</th><th>Temps</th></tr></thead>
+    <tbody><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>UA sqlmap scanner</td><td>scanner_ua</td><td>SQLi scanner UA</td><td style="color:#dc2626">HTTP 200 — Passé</td><td style="color:#6b7280;white-space:nowrap">278 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>UA curl normal</td><td>neutral_ua</td><td>Legitimate curl</td><td style="color:#16a34a">HTTP 200 — Passé</td><td style="color:#6b7280;white-space:nowrap">277 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>UA Nikto scanner</td><td>scanner_ua</td><td>Web scanner UA</td><td style="color:#dc2626">HTTP 200 — Passé</td><td style="color:#6b7280;white-space:nowrap">278 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>SQLi in URL</td><td>sqli_attempt</td><td>SQLi payload</td><td style="color:#dc2626">HTTP 200 — Passé</td><td style="color:#6b7280;white-space:nowrap">444 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>Path traversal</td><td>path_traversal</td><td>Dir traversal</td><td style="color:#dc2626">HTTP 404 — Passé</td><td style="color:#6b7280;white-space:nowrap">207 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>XSS in URL</td><td>xss_attempt</td><td>XSS payload</td><td style="color:#dc2626">HTTP 200 — Passé</td><td style="color:#6b7280;white-space:nowrap">243 ms</td></tr></tbody>
+  </table></div>
+
+  <h2>Bypass / Contournement de filtrage</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>Test</th><th>Technique</th><th>Description</th><th>Résultat</th><th>Confiance</th><th>Temps</th></tr></thead>
+    <tbody><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Sous-domaine www2</td><td>subdomain</td><td>Sous-domaine alternatif gambling</td><td style="color:#16a34a">Connexion refusée — bloqué</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">68 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>IP directe Binance</td><td>direct_ip</td><td>Accès via IP directe sans résolution DNS</td><td style="color:#16a34a">Connexion refusée — bloqué</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">289 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>IP directe Pornhub</td><td>direct_ip</td><td>Accès via IP directe sans résolution DNS</td><td style="color:#16a34a">HTTP 403 — Bloqué</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">383 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Sous-domaine cdn Discord</td><td>subdomain</td><td>CDN Discord souvent oublié dans les règles</td><td style="color:#16a34a">HTTP 403 — Bloqué</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">385 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>Double encode slash</td><td>url_encode</td><td>Double encodage redirect</td><td style="color:#dc2626">HTTP 404 — Bypass possible [!]</td><td><span style="background:#431407;color:#fdba74;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">PROBABLE</span></td><td style="color:#6b7280;white-space:nowrap">452 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>Sous-domaine api Twitter</td><td>subdomain</td><td>API Twitter/X contourne le filtrage web</td><td style="color:#dc2626">HTTP 404 — Bypass possible [!]</td><td><span style="background:#431407;color:#fdba74;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">PROBABLE</span></td><td style="color:#6b7280;white-space:nowrap">519 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>Majuscules PornHub</td><td>case_bypass</td><td>Hostname en majuscules — contourne filtres case-sensitive</td><td style="color:#dc2626">HTTP 200 — Bypass possible [!]</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">242 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>URL encode Pornhub</td><td>url_encode</td><td>Encodage du point — contourne filtres naïfs</td><td style="color:#dc2626">HTTP 200 — Bypass possible [!]</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">526 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>Base64 payload GET</td><td>base64</td><td>Payload base64 dans param — détection IPS</td><td style="color:#dc2626">HTTP 200 — Bypass possible [!]</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">353 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>IP directe XVideos</td><td>direct_ip</td><td>Accès via IP directe sans résolution DNS</td><td style="color:#dc2626">HTTP 200 — Bypass possible [!]</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">746 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>Majuscules TIKTOK</td><td>case_bypass</td><td>Hostname mixte majuscules/minuscules</td><td style="color:#dc2626">HTTP 200 — Bypass possible [!]</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">547 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>Sous-domaine m. TikTok</td><td>subdomain</td><td>Version mobile — même catégorie</td><td style="color:#dc2626">HTTP 200 — Bypass possible [!]</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">1039 ms</td></tr></tbody>
+  </table></div>
+
+  <h2>Protocoles alternatifs</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>Test</th><th>Proto</th><th>Port</th><th>Description</th><th>Résultat</th><th>Confiance</th><th>Temps</th></tr></thead>
+    <tbody><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>MQTT TLS port 8883</td><td>mqtt_tls</td><td>8883</td><td>MQTT chiffré — doit être bloqué si non autorisé</td><td style="color:#dc2626">MQTT test.mosquitto.org:8883 — TCP reachable [!]</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">38 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>MQTT broker port 1883</td><td>mqtt</td><td>1883</td><td>MQTT non chiffré — vecteur IoT C2</td><td style="color:#dc2626">MQTT test.mosquitto.org:1883 — TCP reachable [!]</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">59 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>WebSocket wss:// port 443</td><td>wss</td><td>443</td><td>WebSocket TLS — trafic légitime possible</td><td style="color:#dc2626">WSS ws.ifelse.io:443 — TCP reachable (TLS)</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">8 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>WebSocket ws:// port 80</td><td>websocket</td><td>80</td><td>WebSocket non chiffré</td><td style="color:#dc2626">WebSocket ws:// — handshake accepté [!]</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">66 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>SMTP port 25</td><td>smtp</td><td>25</td><td>SMTP direct sortant — spam/exfil</td><td style="color:#dc2626">TCP smtp.gmail.com:25 — reachable [!]</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">16 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>SSH port 22</td><td>ssh</td><td>22</td><td>SSH sortant — tunnel potentiel</td><td style="color:#dc2626">SSH scanme.nmap.org:22 — TCP reachable [!]</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">155 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>FTP standard port 21</td><td>ftp</td><td>21</td><td>FTP sortant — doit être bloqué en entreprise</td><td style="color:#dc2626">FTP ftp.dlptest.com:21 — TCP reachable [!]</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">194 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>SSH port alternatif 2222</td><td>ssh_alt</td><td>2222</td><td>SSH sur port non standard</td><td style="color:#16a34a">Connexion refusée par l'hôte</td><td><span style="background:#431407;color:#fdba74;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">PROBABLE</span></td><td style="color:#6b7280;white-space:nowrap">2793 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>FTP alternatif port 2121</td><td>ftp_alt</td><td>2121</td><td>FTP sur port non standard</td><td style="color:#16a34a">Timeout — pare-feu</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">8030 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>IMAP port 143</td><td>imap</td><td>143</td><td>IMAP sortant — exfiltration email</td><td style="color:#16a34a">Timeout — pare-feu</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">16036 ms</td></tr></tbody>
+  </table></div>
+
+  <h2>Ports non standard</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>Test</th><th>Port</th><th>Catégorie</th><th>Description</th><th>Résultat</th><th>Confiance</th><th>Temps</th></tr></thead>
+    <tbody><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>PostgreSQL port 5432</td><td>5432</td><td>db_port</td><td>PostgreSQL exposé</td><td style="color:#16a34a">Refusé par l'hôte (peut être FW ou service absent)</td><td><span style="background:#431407;color:#fdba74;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">PROBABLE</span></td><td style="color:#6b7280;white-space:nowrap">2800 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>MySQL port 3306</td><td>3306</td><td>db_port</td><td>MySQL exposé — accès BDD direct interdit</td><td style="color:#16a34a">Refusé par l'hôte (peut être FW ou service absent)</td><td><span style="background:#431407;color:#fdba74;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">PROBABLE</span></td><td style="color:#6b7280;white-space:nowrap">2801 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>HTTPS alt port 8443</td><td>8443</td><td>https_alt</td><td>HTTPS sur 8443 — contourne filtres HTTPS</td><td style="color:#16a34a">Refusé par l'hôte (peut être FW ou service absent)</td><td><span style="background:#431407;color:#fdba74;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">PROBABLE</span></td><td style="color:#6b7280;white-space:nowrap">2803 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>HTTPS alt port 4443</td><td>4443</td><td>https_alt</td><td>HTTPS sur 4443</td><td style="color:#16a34a">Refusé par l'hôte (peut être FW ou service absent)</td><td><span style="background:#431407;color:#fdba74;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">PROBABLE</span></td><td style="color:#6b7280;white-space:nowrap">2805 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>HTTP alt port 8000</td><td>8000</td><td>http_alt</td><td>HTTP dev server port</td><td style="color:#16a34a">Refusé par l'hôte (peut être FW ou service absent)</td><td><span style="background:#431407;color:#fdba74;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">PROBABLE</span></td><td style="color:#6b7280;white-space:nowrap">2807 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>HTTP alt port 8888</td><td>8888</td><td>http_alt</td><td>HTTP sur 8888</td><td style="color:#16a34a">Refusé par l'hôte (peut être FW ou service absent)</td><td><span style="background:#431407;color:#fdba74;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">PROBABLE</span></td><td style="color:#6b7280;white-space:nowrap">2810 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>HTTP alt port 3128</td><td>3128</td><td>proxy_port</td><td>Port proxy Squid — accès direct suspect</td><td style="color:#16a34a">Refusé par l'hôte (peut être FW ou service absent)</td><td><span style="background:#431407;color:#fdba74;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">PROBABLE</span></td><td style="color:#6b7280;white-space:nowrap">2815 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>HTTP alt port 8080</td><td>8080</td><td>http_alt</td><td>HTTP sur 8080 — souvent non filtré</td><td style="color:#16a34a">Refusé par l'hôte (peut être FW ou service absent)</td><td><span style="background:#431407;color:#fdba74;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">PROBABLE</span></td><td style="color:#6b7280;white-space:nowrap">2830 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>MongoDB port 27017</td><td>27017</td><td>db_port</td><td>MongoDB exposé</td><td style="color:#16a34a">Refusé par l'hôte (peut être FW ou service absent)</td><td><span style="background:#431407;color:#fdba74;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">PROBABLE</span></td><td style="color:#6b7280;white-space:nowrap">2756 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Elasticsearch 9200</td><td>9200</td><td>db_port</td><td>Elasticsearch — index de données</td><td style="color:#16a34a">Refusé par l'hôte (peut être FW ou service absent)</td><td><span style="background:#431407;color:#fdba74;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">PROBABLE</span></td><td style="color:#6b7280;white-space:nowrap">2756 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Redis port 6379</td><td>6379</td><td>db_port</td><td>Redis exposé — souvent sans auth</td><td style="color:#16a34a">Refusé par l'hôte (peut être FW ou service absent)</td><td><span style="background:#431407;color:#fdba74;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">PROBABLE</span></td><td style="color:#6b7280;white-space:nowrap">2812 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Kubernetes API 6443</td><td>6443</td><td>infra_port</td><td>API Kubernetes exposée</td><td style="color:#16a34a">Refusé par l'hôte (peut être FW ou service absent)</td><td><span style="background:#431407;color:#fdba74;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">PROBABLE</span></td><td style="color:#6b7280;white-space:nowrap">2809 ms</td></tr></tbody>
+  </table></div>
+
+  <h2>Exfiltration DNS</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>Test</th><th>Domaine</th><th>Type</th><th>Description</th><th>Résultat</th><th>Confiance</th><th>Temps</th></tr></thead>
+    <tbody><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>DNS TXT record (data exfil)</td><td>whoami.akamai.net</td><td>TXT</td><td>TXT query — vecteur exfil classique</td><td style="color:#dc2626">TXT résolu: Serveur :   SERVADDC06.add-on.local
+Address:  192.168.237.37
+
+(root)	??? unknown</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">190 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>DNS AAAA exfil simulation</td><td>ipv6.google.com</td><td>AAAA</td><td>Query AAAA — tunnel IPv6 DNS</td><td style="color:#16a34a">NXDOMAIN / refusé</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">13 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>DNS long subdomain (DGA)</td><td>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.example.com</td><td>A</td><td>Subdomain 50 chars — DGA/tunnel DNS</td><td style="color:#16a34a">NXDOMAIN / refusé</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">12 ms</td></tr><tr><td style="color:#dc2626;font-size:1.05em">[X]</td><td>DNS tunnel simulé</td><td>dnscat.example.com</td><td>TXT</td><td>Domaine typique outil tunnel DNS</td><td style="color:#dc2626">TXT résolu: Serveur :   SERVADDC06.add-on.local
+Address:  192.168.237.37
+
+example.com
+	prima</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">91 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>DNS rebinding test</td><td>make-1.2.3.4-rebind.me</td><td>A</td><td>DNS rebinding — attaque navigateur</td><td style="color:#16a34a">NXDOMAIN / refusé</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">8 ms</td></tr></tbody>
+  </table></div>
+
+  <h2>Upload fichiers suspects</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>Test</th><th>Fichier</th><th>Description</th><th>Résultat</th><th>Confiance</th><th>Temps</th></tr></thead>
+    <tbody><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Upload EICAR via POST</td><td>eicar.exe</td><td>Upload binaire EICAR — doit être bloqué par DLP</td><td style="color:#16a34a">Timeout</td><td><span style="background:#431407;color:#fdba74;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">PROBABLE</span></td><td style="color:#6b7280;white-space:nowrap">8332 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Upload .exe générique</td><td>malware.exe</td><td>Upload PE header — signature EXE Windows</td><td style="color:#16a34a">Timeout</td><td><span style="background:#431407;color:#fdba74;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">PROBABLE</span></td><td style="color:#6b7280;white-space:nowrap">8339 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Upload script PS1</td><td>payload.ps1</td><td>PowerShell download — pattern malveillant</td><td style="color:#16a34a">Timeout</td><td><span style="background:#431407;color:#fdba74;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">PROBABLE</span></td><td style="color:#6b7280;white-space:nowrap">8342 ms</td></tr><tr><td style="color:#16a34a;font-size:1.05em">[OK]</td><td>Upload fichier texte normal</td><td>rapport.txt</td><td>Upload texte innocent — ne doit PAS être bloqué</td><td style="color:#16a34a">Timeout</td><td><span style="background:#431407;color:#fdba74;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">PROBABLE</span></td><td style="color:#6b7280;white-space:nowrap">8395 ms</td></tr></tbody>
+  </table></div>
+
+  <h2>[BW] Bandwidth / QoS</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>Test</th><th>Catégorie</th><th>Vitesse</th><th>Description</th><th>Résultat</th><th>Confiance</th><th>Temps</th></tr></thead>
+    <tbody><tr><td>[BW]</td><td>YouTube throttle</td><td>streaming</td><td style="color:#38bdf8;font-weight:700">0 KB/s</td><td style="color:#6b7280">CDN YouTube — QoS/throttling streaming</td><td>Connexion refusée</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">48 ms</td></tr><tr><td>[BW]</td><td>Speedtest.net API</td><td>speed</td><td style="color:#38bdf8;font-weight:700">10338 KB/s</td><td style="color:#6b7280">API Speedtest — baseline réseau</td><td>[OK] 10338 KB/s — OK (seuil 50 KB/s)</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">424 ms</td></tr><tr><td>[BW]</td><td>Speed test 1MB</td><td>speed</td><td style="color:#38bdf8;font-weight:700">12195 KB/s</td><td style="color:#6b7280">Téléchargement 1MB — vitesse de base</td><td>[OK] 12195 KB/s — OK (seuil 100 KB/s)</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">476 ms</td></tr><tr><td>[BW]</td><td>Speed test 10MB</td><td>speed</td><td style="color:#38bdf8;font-weight:700">6706 KB/s</td><td style="color:#6b7280">Téléchargement 10MB — détection throttling</td><td>[OK] 6706 KB/s — OK (seuil 500 KB/s)</td><td><span style="background:#14532d;color:#86efac;padding:.12rem .45rem;border-radius:999px;font-size:.6rem;font-weight:700;letter-spacing:.4px">CERTAIN</span></td><td style="color:#6b7280;white-space:nowrap">694 ms</td></tr></tbody>
+  </table></div>
+
+</div>
+
+<div class="footer-band">
+  <span>FirewallTester v3.0 — ADDON — Alex DUFOUR</span>
+  <span>CONFIDENTIEL — 2026-08-12</span>
+  <span>[!] Usage sur réseaux autorisés uniquement</span>
+</div>
+
+<script>
+function toggleAcc(id){
+  var el=document.getElementById(id), arrow=document.getElementById(id+'_arrow');
+  if(el.style.display==='none'){el.style.display='block';arrow.style.transform='rotate(90deg)'}
+  else{el.style.display='none';arrow.style.transform=''}
+}
+</script>
+</body>
+</html>

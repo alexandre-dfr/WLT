@@ -10,16 +10,17 @@
     "email": "auditeur@esn.fr"
   },
   "audit": {
-    "title": "Audit Pare-feu & Web Policy",
-    "period_start": "2025-04-01",
-    "period_end": "2025-04-03",
-    "version": "1.0",
-    "confidentiality": "CONFIDENTIEL"
+    "title": "Audit de pare-feu et de politique web",
+    "scope": "",
+    "confidentiality": "CONFIDENTIEL",
+    "version": "1.0"
   },
   "proxy": {
     "enabled": false,
     "url": "",
     "username": "",
     "password": ""
-  }
+  },
+  "_policy_aide": "Aligne l'outil sur la politique du client. Valeurs : blocked (doit être bloqué, compte dans la note), allowed (doit passer), policy (hors note). Catégories : social_media, streaming, ai_llm, crypto, vpn, data_exfil, file_sharing, hacking_tools, cloud_pro.",
+  "policy": {}
 }
