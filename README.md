@@ -38,6 +38,36 @@ Vérifier le moteur de détection sans toucher au réseau :
 python firewall_tester.py --self-test
 ```
 
+## Antivirus / EDR sur le poste de test (important)
+
+La chaîne de test **EICAR** est, par conception, reconnue par tous les antivirus.
+Sur un poste protégé par un EDR (Sophos Intercept X, Defender…), deux risques :
+
+- le **fichier source** est mis en quarantaine s'il contient la signature en clair ;
+- le **process** est tué — et le script quarantiné — si la charge est présente en
+  mémoire pendant l'exécution.
+
+La v4.0.2 les neutralise **à la source** :
+
+- le fichier ne contient **aucune** signature EICAR (ni brute, ni encodée, ni masquée)
+  et **aucune** routine de déchiffrement/obfuscation — c'est justement ce genre de
+  motif « packer » que les moteurs heuristiques flaggent ;
+- les charges d'exploit du module WAF sont stockées en **fragments inertes**,
+  assemblés uniquement à l'exécution : aucune chaîne d'attaque complète n'apparaît
+  dans le source ;
+- les modules `eicar` et `upload` sont **gelés par défaut** ; avec `--allow-eicar`,
+  la charge EICAR est alors **téléchargée à la volée** depuis la source officielle,
+  jamais présente dans le code. Les 10 autres modules tournent normalement.
+
+Pour réellement exécuter les tests EICAR (par ex. pour mesurer un proxy distant),
+**exclure d'abord le dossier de l'antivirus**, puis :
+
+```bash
+python firewall_tester.py --no-tui --allow-eicar
+```
+
+En menu interactif, la touche **[E]** active/désactive ces modules.
+
 ## Principes de mesure
 
 C'est ce qui différencie la v4 : **un test qui ne prouve rien ne compte pas**.
@@ -122,6 +152,7 @@ référence, aucun verdict « bloqué » n'est retenu.**
 | `--no-proxy` | ignorer le proxy système |
 | `--timeout 10` | délai réseau (défaut 6 s) |
 | `--config mon_config.json` | fichier de configuration |
+| `--allow-eicar` | exécuter réellement les modules eicar/upload (exclure le dossier de l'AV avant) |
 | `--list-tests` | inventaire des tests |
 | `--self-test` | contrôle hors ligne du moteur de détection |
 

